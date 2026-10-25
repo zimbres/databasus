@@ -1,0 +1,33 @@
+services:
+  verification-agent:
+    build: .
+    image: databasus-verification-container-agent:local
+    container_name: databasus-verification-container-agent
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    group_add:
+      - "${DOCKER_SOCKET_GID:?Set DOCKER_SOCKET_GID to the Docker socket group ID}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets:
+      - agent_token
+    environment:
+      DATABASUS_URL: "${DATABASUS_URL:?Set the Databasus URL}"
+      AGENT_ID: "${AGENT_ID:?Set an existing verification agent ID}"
+      AGENT_TOKEN_FILE: /run/secrets/agent_token
+      VERIFICATION_RUNTIME: docker
+      DOCKER_CONTROLLER_CONTAINER: databasus-verification-container-agent
+      MAX_CPU: "${MAX_CPU:-2}"
+      MAX_RAM_MB: "${MAX_RAM_MB:-2048}"
+      MAX_DISK_GB: "${MAX_DISK_GB:-20}"
+      MAX_CONCURRENT_JOBS: "${MAX_CONCURRENT_JOBS:-1}"
+      VERIFICATION_PG_IMAGE_REPO: "${VERIFICATION_PG_IMAGE_REPO:-databasus/verification-postgres}"
+      ALLOW_INSECURE_HTTP: "${ALLOW_INSECURE_HTTP:-false}"
+    stop_grace_period: 90s
+
+secrets:
+  agent_token:
+    file: "${AGENT_TOKEN_FILE:?Set AGENT_TOKEN_FILE to a readable local secret file}"
