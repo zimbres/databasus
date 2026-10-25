@@ -1,0 +1,154 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: databasus-verification
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: verification-agent
+  namespace: databasus-verification
+type: Opaque
+stringData:
+  agent-id: REPLACE_WITH_AGENT_ID
+  token: REPLACE_WITH_AGENT_TOKEN
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: verification-controller
+  namespace: databasus-verification
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: verification-controller
+  namespace: databasus-verification
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, create, delete]
+  - apiGroups: [""]
+    resources: [pods/exec]
+    verbs: [get, create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: verification-controller
+  namespace: databasus-verification
+subjects:
+  - kind: ServiceAccount
+    name: verification-controller
+    namespace: databasus-verification
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: verification-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verification-controller
+  namespace: databasus-verification
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: databasus-verification-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: databasus-verification-controller
+    spec:
+      serviceAccountName: verification-controller
+      terminationGracePeriodSeconds: 90
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: controller
+          image: databasus-verification-container-agent:local
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          env:
+            - name: VERIFICATION_RUNTIME
+              value: kubernetes
+            - name: DATABASUS_URL
+              value: https://databasus.example.com
+            - name: AGENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: verification-agent
+                  key: agent-id
+            - name: AGENT_TOKEN_FILE
+              value: /run/secrets/agent/token
+            - name: MAX_CPU
+              value: "2"
+            - name: MAX_RAM_MB
+              value: "2048"
+            - name: MAX_DISK_GB
+              value: "20"
+            - name: MAX_CONCURRENT_JOBS
+              value: "1"
+            - name: KUBERNETES_STORAGE_GB
+              value: "20"
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: KUBERNETES_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: KUBERNETES_POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+          volumeMounts:
+            - name: agent-token
+              mountPath: /run/secrets/agent
+              readOnly: true
+      volumes:
+        - name: agent-token
+          secret:
+            secretName: verification-agent
+            items:
+              - key: token
+                path: token
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: verification-workloads
+  namespace: databasus-verification
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: verification-workload
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: databasus-verification-controller
+      ports:
+        - protocol: TCP
+          port: 5432
+  egress: []
