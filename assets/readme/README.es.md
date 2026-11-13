@@ -2,7 +2,7 @@
   <img src="../logo.svg" alt="Databasus Logo" width="250"/>
 
   <h3>Herramienta de copia de seguridad de PostgreSQL</h3>
-  <p>Databasus es una herramienta gratuita, de código abierto y autoalojada para respaldar PostgreSQL. Cree copias de seguridad en distintos almacenamientos (S3, Google Drive, FTP, etc.) con notificaciones sobre el progreso (Slack, Discord, Telegram, etc.). Con un enfoque en Point-in-Time Recovery con RPO/RTO bajos</p>
+  <p>Databasus es una herramienta gratuita, de código abierto y autoalojada para respaldar PostgreSQL. Cree copias de seguridad en distintos almacenamientos (S3, Azure Blob Storage, FTP, etc.) con notificaciones sobre el progreso (Slack, Discord, Telegram, etc.). Con un enfoque en Point-in-Time Recovery con RPO/RTO bajos</p>
   
   <!-- Badges -->
    [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -22,15 +22,15 @@
     <b>Español</b> •
     <a href="README.pt.md">Português</a> •
     <a href="README.zh.md">中文</a> •
-    <a href="README.fr.md">Français</a>
+    <a href="README.fr.md">Français</a> •
+    <a href="README.id.md">Bahasa Indonesia</a>
   </p>
 
   <p>
     <a href="#-características">Características</a> •
     <a href="#-instalación">Instalación</a> •
     <a href="#-uso">Uso</a> •
-    <a href="#-licencia">Licencia</a> •
-    <a href="#-contribuir">Contribuir</a>
+    <a href="#-licencia">Licencia</a>
   </p>
 
   <p style="margin-top: 20px; margin-bottom: 20px; font-size: 1.2em;">
@@ -79,7 +79,7 @@ Databasus ejecuta una restauración real para confirmar que las copias sirven, e
 ### 🗄️ **Múltiples destinos de almacenamiento** <a href="https://databasus.com/es/storages/">(ver compatibles)</a>
 
 - **Almacenamiento local**: guarde las copias en su VPS o servidor
-- **Almacenamiento en la nube**: S3, Cloudflare R2, Google Drive, NAS, Dropbox, SFTP, Rclone y más
+- **Almacenamiento en la nube**: S3, Cloudflare R2, Azure Blob Storage, NAS, FTP, SFTP y más
 - **Seguro**: todos los datos quedan bajo su control
 
 ### 📱 **Notificaciones** <a href="https://databasus.com/es/notifiers/">(ver compatibles)</a>
@@ -254,7 +254,7 @@ Para más opciones (NodePort, TLS, HTTPRoute para Gateway API), consulte el [REA
 2. **Añada su primera base de datos para respaldar**: pulse "New Database" y siga el asistente
 3. **Configure la programación**: elija entre intervalos horarios, diarios, semanales, mensuales o cron
 4. **Indique la conexión a la base de datos**: introduzca sus credenciales y los datos de conexión
-5. **Elija el almacenamiento**: seleccione dónde guardar las copias (local, S3, Google Drive, etc.)
+5. **Elija el almacenamiento**: seleccione dónde guardar las copias (local, S3, Azure Blob Storage, etc.)
 6. **Configure la política de retención**: elija periodo de tiempo, cantidad o GFS para controlar cuánto se conservan las copias
 7. **Añada notificaciones** (opcional): configure avisos por correo, Telegram, Slack, Mattermost o webhook
 8. **Guarde y arranque**: Databasus validará la configuración y pondrá en marcha la programación de respaldos
@@ -293,17 +293,15 @@ Después de instalarlo, conviene también <a href="https://databasus.com/es/faq/
 
 ## 🛡️ Ingeniería de seguridad y fiabilidad
 
-Databasus trabaja con datos sensibles, así que prevenir vulnerabilidades, accesos no autorizados y fugas de datos es una preocupación primordial. Invertimos en ello en ambos lados del sistema: en el propio código (comprobaciones de permisos, cifrado, manejo cuidadoso de los secretos) y en la infraestructura que lo rodea (análisis de dependencias, respuesta a CVE, prácticas DevSecOps). La canalización que se describe a continuación se ejecuta automáticamente en cada commit y PR. Ninguna capa basta por sí sola, pero juntas reducen la probabilidad de que código vulnerable, dependencias inseguras, imágenes rotas o copias no restaurables lleguen a una versión publicada.
+Consulte el [proceso completo de seguridad y fiabilidad](https://databasus.com/es/security/#security-and-reliability-engineering).
 
-Para el análisis estático combinamos varias pasadas independientes. CodeQL escanea todo el código en busca de problemas de seguridad. En cada PR, gitleaks busca secretos filtrados y semgrep revisa el código con reglas de seguridad. Los Dockerfiles y los flujos de CI tienen reglas adicionales propias (referencias de acciones fijadas, permisos de mínimo privilegio, imágenes base sospechosas), de modo que los patrones inseguros se señalan antes de fusionarse. Además de estas comprobaciones por PR, Codex Security de OpenAI realiza auditorías periódicas y más profundas de todo el código. Es un programa aparte que detecta problemas arquitectónicos y transversales que los escaneos limitados al momento del PR pasan por alto.
+Antes de cada versión, Databasus ejecuta comprobaciones automáticas para reducir el riesgo de vulnerabilidades, filtraciones de datos y copias de seguridad que no se puedan restaurar:
 
-En cuanto a las dependencias, Dependabot vigila todas las nuestras contra la GitHub Advisory Database y detecta los CVE a los pocos minutos de su publicación. Las actualizaciones pasan por un periodo de espera para que las versiones recién publicadas maduren antes de que las adoptemos. Es una defensa deliberada contra incidentes de paquetes comprometidos, como los ataques a la cadena de suministro. La Dependency Review Action bloquea de plano cualquier PR que introduzca un CVE nuevo de nivel HIGH o CRITICAL.
+- **Análisis de seguridad:** buscan vulnerabilidades conocidas en el código, las dependencias y las imágenes de contenedores, además de secretos expuestos.
+- **Pruebas de restauración:** ejecutan ciclos completos de copia de seguridad y restauración en contenedores reales para cada motor y versión principal compatibles.
+- **Requisitos de publicación:** las pruebas, las compilaciones y las comprobaciones de seguridad deben pasar. Los hallazgos críticos de CodeQL abiertos en el análisis de la versión bloquean su publicación.
 
-Las imágenes de contenedor se escanean con Trivy en cada build. Una pasada aparte de Trivy sobre el Dockerfile detecta configuraciones incorrectas antes de que lleguen a una imagen. Todas las GitHub Actions están fijadas a SHA de commit completos en lugar de etiquetas flotantes como `@v4` o `@main`, que han sido un vector de ataque activo en 2025. Los flujos de trabajo usan por defecto permisos de mínimo privilegio y solo los elevan por trabajo cuando hace falta de verdad.
-
-Las rutas críticas están cubiertas por pruebas unitarias y de integración, ejecutadas contra contenedores de bases de datos reales para cada motor y versión mayor compatibles. La restauración es la ruta que más importa en una herramienta de respaldo, así que la probamos explícitamente: cada PR ejecuta ciclos completos de copia y restauración contra esos mismos contenedores reales y verifica que las copias realmente pueden restaurarse de extremo a extremo, no solo escribirse con éxito. El resto de la canalización de CI/CD ejecuta lint, comprobación de tipos, la suite de pruebas completa, pruebas de humo de las imágenes y builds multiarquitectura en cada PR. Una versión solo se publica si todo pasa.
-
-¿Ha encontrado una vulnerabilidad? Infórmela a través de la pestaña Security de GitHub. Consulte [SECURITY.md](https://github.com/databasus/databasus?tab=security-ov-file#readme). Los informes de seguridad se atienden con la máxima prioridad. Para la seguridad de la aplicación en ejecución (AES-256-GCM en reposo, almacenamiento de confianza cero, secretos cifrados, usuario de base de datos de solo lectura por defecto), consulte [Seguridad de nivel empresarial](#-seguridad-de-nivel-empresarial-documentación) en la sección de características de arriba.
+Las auditorías periódicas de Codex Security de OpenAI complementan estas comprobaciones. Comunique las vulnerabilidades de forma privada siguiendo [SECURITY.md](https://github.com/databasus/databasus?tab=security-ov-file#readme); estos informes tienen prioridad.
 
 ---
 
@@ -311,8 +309,6 @@ Las rutas críticas están cubiertas por pruebas unitarias y de integración, ej
 
 Este proyecto está publicado bajo la licencia Apache 2.0. Consulte el archivo [LICENSE](../../LICENSE) para los detalles
 
-## 🤝 Contribuir
+## 💬 Comunidad
 
-¡Las contribuciones son bienvenidas! Lea la <a href="https://databasus.com/contribute">guía de contribución</a> para conocer los detalles, las prioridades y las reglas. Si quiere contribuir pero no sabe por dónde empezar, escríbame por Telegram [@rostislav_dugin](https://t.me/rostislav_dugin)
-
-También puede unirse a nuestra gran comunidad de desarrolladores, DBA e ingenieros DevOps en Telegram [@databasus_community](https://t.me/databasus_community).
+Únase a nuestra gran comunidad de desarrolladores, DBA e ingenieros DevOps en Telegram [@databasus_community](https://t.me/databasus_community).

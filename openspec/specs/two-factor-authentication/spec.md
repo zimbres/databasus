@@ -97,17 +97,33 @@ This applies to every account on the instance, including the recorded bootstrap 
 
 ### Requirement: A code is sent only after the password is verified
 
-The instance SHALL verify the password before generating or sending any code. A sign-in attempt with an unknown address or a wrong password SHALL send no mail, SHALL create no pending sign-in, and SHALL answer exactly as it does with the second factor off, so the response does not disclose whether the address exists or whether the second factor is on.
+The instance SHALL verify the password and admit the account to password sign-in before generating or sending any code. A sign-in refusal for an unknown address, an incorrect password, incomplete registration, an account without a password or verified deactivation SHALL send no mail and SHALL create no new pending sign-in. A refused password attempt SHALL NOT alter or invalidate an existing pending sign-in; its expiry, reuse and verification SHALL remain governed by the existing pending sign-in requirements. The refusal SHALL give the same status, specific error code and guidance as it does with the second factor off, so the answer does not disclose whether the second factor is on. Distinguishing the existence of the submitted address and the other specific refusal causes is intentional.
 
 #### Scenario: Wrong password
 
 - **WHEN** someone submits a known address with an incorrect password
-- **THEN** no mail is sent and the response is the same one the instance gives with the second factor off
+- **THEN** no mail is sent, no new pending sign-in is created, and the response identifies an incorrect password just as it does with the second factor off
+
+#### Scenario: Wrong password after a pending sign-in was issued
+
+- **WHEN** an account already has a live pending sign-in from a successful password step and a subsequent password attempt fails
+- **THEN** the failed attempt creates no new pending sign-in, sends no mail and leaves the existing pending sign-in unchanged
+- **AND** a subsequent correct password step reuses that pending sign-in, and its previously issued code remains usable under the existing expiry and verification rules
 
 #### Scenario: Unknown address
 
 - **WHEN** someone submits an address that belongs to no account
-- **THEN** no mail is sent and no pending sign-in exists
+- **THEN** no mail is sent, no new pending sign-in is created, and the response identifies an unknown address just as it does with the second factor off
+
+#### Scenario: Incomplete registration or missing password
+
+- **WHEN** someone submits an invited account's address or an account without a password
+- **THEN** no mail is sent, no new pending sign-in is created, and the response gives the same respective cause and guidance as it does with the second factor off
+
+#### Scenario: Correct password for an inactive account
+
+- **WHEN** someone submits an inactive account's correct password while the second factor is required
+- **THEN** the response identifies deactivation without sending mail or creating a new pending sign-in
 
 ### Requirement: A pending sign-in expires, tolerates few wrong guesses, and can be resent
 
@@ -252,10 +268,73 @@ The published documentation SHALL state that the instance can require an emailed
 
 #### Scenario: A reader looks up what protects sign-in
 
-- **WHEN** a reader consults the published security material in any of the six languages
+- **WHEN** a reader consults the published security material in any supported language
 - **THEN** it states that sign-in can require an emailed code, and does not claim that this covers sign-in through an external identity provider
 
 #### Scenario: An owner locked out by a broken mail server
 
 - **WHEN** that owner reads the published password and recovery documentation
 - **THEN** it names the command that switches the second factor off and shows how to run it
+
+### Requirement: A password change requires a complete new sign-in
+
+After a successful password change in the profile, the interface SHALL clear its current session, display the ordinary sign-in screen and tell the user that the password changed and signing in again is required. It SHALL NOT submit the new password automatically or report a completed sign-in before authentication completes. This SHALL apply whether the instance requires a second factor or not.
+
+A refused or failed password change SHALL leave the current session and profile open, display the failure, and SHALL NOT display password-change success.
+
+#### Scenario: Password changed with a required second factor
+
+- **WHEN** a signed-in user changes their password on an instance requiring a second factor
+- **THEN** the interface displays the sign-in screen and the password-change message
+- **AND** it starts no sign-in and sends no code until the user submits the ordinary sign-in form
+
+#### Scenario: Completing sign-in with the new password
+
+- **WHEN** the user signs in with the new password after changing it and a second factor is required
+- **THEN** the ordinary emailed-code step is shown and the interface becomes authenticated only after that step succeeds
+
+#### Scenario: Password changed without a second factor
+
+- **WHEN** a signed-in user changes their password while a second factor is not required
+- **THEN** the interface still displays the sign-in screen and requires a new sign-in
+
+#### Scenario: Password change is refused
+
+- **WHEN** a password change fails validation or the server refuses it
+- **THEN** the profile remains open with its current session and displays the failure
+
+### Requirement: A password change grants no authentication shortcut
+
+The session issued before a successful password change SHALL no longer authorize requests. A subsequent password sign-in SHALL meet the same bot challenge and second-factor requirements as any other new sign-in. Neither the password-change response nor a pending sign-in SHALL authorize the interface.
+
+Invalidation SHALL hold even when the password changes in the same second or at the exact same clock instant as its previous setting. An earlier pending sign-in SHALL NOT complete or be reused after replacement, even when its emailed code is correct. Every successful replacement SHALL invalidate earlier authentication state; a rejected or rolled-back replacement SHALL NOT do so.
+
+#### Scenario: Earlier token is used again
+
+- **WHEN** a client sends an authenticated request using a session issued before the password changed
+- **THEN** the request is refused as unauthenticated
+
+#### Scenario: Password changes within the same second
+
+- **WHEN** the password is replaced in the same second as its previous setting and a client reuses an earlier token
+- **THEN** that token is refused as unauthenticated and a completed new sign-in with the new password authorizes requests
+
+#### Scenario: Multiple replacements at one clock instant
+
+- **WHEN** a user completes a new sign-in and changes the password again without any clock advancement
+- **THEN** every session issued before the latest replacement is refused and a completed sign-in with the latest password works
+
+#### Scenario: Earlier emailed code after replacement
+
+- **WHEN** the password changes at the same clock instant while a pending sign-in for the earlier password has a correct emailed code
+- **THEN** that pending sign-in cannot issue a session and the user starts again with the new password
+
+#### Scenario: Replacement does not commit
+
+- **WHEN** a password replacement is refused or its transaction rolls back
+- **THEN** the prior session and usable pending sign-in retain their validity
+
+#### Scenario: Bot protection is enabled
+
+- **WHEN** the user returns to sign-in after changing their password on an instance with bot protection enabled
+- **THEN** the ordinary bot challenge is required before a new password sign-in is accepted

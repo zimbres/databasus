@@ -1,27 +1,37 @@
-import type { en } from './en';
+import type { en } from '@/shared/i18n/locales/en';
 
 export const zh: typeof en = {
   language: {
     nativeName: '中文',
   },
   common: {
+    calendar: {
+      monthLevelControl: '选择月份',
+      yearLevelControl: '选择年份',
+      nextMonth: '下个月',
+      previousMonth: '上个月',
+      nextYear: '下一年',
+      previousYear: '上一年',
+      nextDecade: '下一个十年',
+      previousDecade: '上一个十年',
+      seconds: '秒',
+    },
     actions: {
-      add: '添加',
+      clear: '清除',
+      togglePasswordVisibility: '显示或隐藏密码',
       back: '返回',
       cancel: '取消',
       close: '关闭',
-      confirm: '确认',
       continue: '继续',
       copy: '复制',
       create: '创建',
       delete: '删除',
-      download: '下载',
       edit: '编辑',
       ok: '确定',
-      refresh: '刷新',
       remove: '移除',
       retry: '重试',
       save: '保存',
+      transfer: '转移',
     },
     answers: {
       no: '否',
@@ -37,15 +47,16 @@ export const zh: typeof en = {
       username: '用户名',
     },
     states: {
-      disabled: '已禁用',
       enabled: '已启用',
       loading: '加载中…',
     },
     messages: {
       copiedToClipboard: '已复制到剪贴板',
+      addressChangedEnterSecretAgain: '地址已更改，请重新输入此值。',
     },
     // Joins translated words into one list (Chinese uses 、)
     listSeparator: '、',
+    websiteLink: 'Databasus 网站',
     confirmation: {
       title: '确认',
     },
@@ -62,6 +73,7 @@ export const zh: typeof en = {
       system: '跟随系统',
     },
     navigation: {
+      menu: '导航菜单',
       databases: '数据库',
       storages: '存储',
       notifiers: '通知渠道',
@@ -77,16 +89,11 @@ export const zh: typeof en = {
     diskUsage: {
       title: '磁盘用量',
       hint: '在本地创建和恢复备份需要足够的磁盘空间。恢复时需要的可用空间与备份大小相同。',
-      compactSummary: '磁盘已用 {{used}} / {{total}} GB<lineBreak/>（{{percent}}%）',
       summary: '已用 {{used}} / {{total}} GB（{{percent}}%）',
     },
     workspaceSelection: {
-      createShort: '创建',
       create: '创建工作区',
       selected: '当前工作区',
-      placeholder: '选择工作区',
-      search: '搜索工作区',
-      notFound: '未找到工作区',
       createNew: '+ 新建工作区',
     },
     starButton: {
@@ -99,28 +106,30 @@ export const zh: typeof en = {
       description: '无法自动读取剪贴板，请在下方粘贴内容。',
       placeholder: '在此粘贴连接字符串',
     },
-    auth: {
-      accountsCheckFailed: '无法检查该实例是否已有账户：{{error}}',
-    },
     oauthCallback: {
       failedTitle: '认证失败',
-      codeNotFound: '未找到授权码',
-      stateMissing: '缺少 OAuth state 参数',
-      invalidProvider: '无效的 OAuth 提供方',
+      notCompleted: '登录未完成，请重新开始。',
       returnToSignIn: '返回登录',
       completing: '正在完成认证…',
     },
-    oauthStorage: {
-      configNotFound: '未找到 Google Drive 存储配置',
-      exchangeFailed: 'OAuth 授权码交换失败',
-      unsupportedType: '该存储类型不支持 OAuth',
-      invalidState: 'OAuth state 参数无效',
-      paramNotFound: '未找到 OAuth 参数。请确认重定向 URL 配置正确。',
-      addStorageTitle: '添加存储',
-      storageDescription: '存储是存放备份的位置（本地磁盘、S3 等）',
-    },
   },
   errors: {
+    cleanupPending:
+      '文件清理仍在进行中。请等待清理完成，或逐个删除受影响的存储，并确认剩余文件需要手动删除。',
+    alreadyMember: '该用户已经是工作区成员。',
+    cannotChangeOwnRole: '你不能更改自己在工作区中的角色。',
+    ownerRequiresTransfer: '不能更改或移除所有者。请先将所有权转让给其他成员。',
+    workspaceNotEmpty: '工作区中仍有数据库。请先删除这些数据库，再删除工作区。',
+    databaseConnectionFailed: '无法连接到数据库：{{detail}}',
+    inUse: '它仍被数据库或正在进行的备份或恢复使用。请在不再被使用后重试。',
+    backupNotCompleted: '只能验证已完成的备份。',
+    alreadyRunning: '该操作已在进行中。请等待其完成后重试。',
+    noExtendableChain: '请先执行全量备份，再启动增量备份。',
+    noRestorableBackup: '没有可用于恢复的已完成备份。',
+    targetTimeUnreachable: '现有备份和 WAL 无法恢复到指定时间。',
+    notRunning: '该操作已不在进行中，无需取消。',
+    instanceUnhealthy: '实例运行异常。',
+    insufficientDiskSpace: 'Databasus 服务器的可用磁盘空间不足：{{detail}}',
     unknown: '出了点问题，请重试。',
     networkUnreachable: '无法连接 Databasus 服务器。请检查网络连接后重试。',
     requestFailed: '服务器未能完成请求（HTTP {{status}}）。请稍后重试。',
@@ -129,16 +138,34 @@ export const zh: typeof en = {
     signInCodeNotSent: '实例无法发送登录验证码，请稍后重试或联系管理员。',
     tooManySignInCodes: '该账户在过去一小时内请求的登录验证码过多，请稍后重试。',
     signInCodeResentTooSoon: '验证码发送不到一分钟，请稍等一分钟后再请求新的验证码。',
-    rateLimitExceeded: '尝试次数过多，请稍后重试。',
+    rateLimited: '尝试次数过多，请稍后重试。',
     emailNotConfigured: '实例没有配置邮件服务器。',
     adminEmailMissing: '你的账号没有可以接收测试邮件的有效邮箱地址。',
+    invalidRequest: '服务器认为请求无效并已拒绝。请刷新页面后重试。',
+    notFound: '未找到所请求的内容，它可能已被删除。',
+    internal: '服务器发生内部错误。请稍后重试。',
+    unauthenticated: '会话已结束，请重新登录。',
+    permissionDenied: '您没有执行此操作的权限。',
+    humanVerificationFailed: '人机验证未通过，请完成验证后重试。',
+    emailNotFound: '未找到使用此邮箱的账户。请检查邮箱地址。',
+    passwordIncorrect: '密码不正确。',
+    registrationIncomplete: '注册尚未完成。请使用此邮箱注册以接受邀请。',
+    passwordNotSet: '此账户尚未设置密码。',
+    passwordNotSetGoogle: '此账户尚未设置密码。请通过 Google 登录。',
+    passwordNotSetGithub: '此账户尚未设置密码。请通过 GitHub 登录。',
+    passwordNotSetGoogleGithub: '此账户尚未设置密码。请通过 Google 或 GitHub 登录。',
+    userDeactivated: '此账户已停用，请联系管理员启用。',
+    registrationClosed: '该实例已关闭注册，请联系管理员邀请您。',
+    emailTaken: '该邮箱地址已被使用。',
+    invalidResetCode: '重置码不正确或已过期，请重新获取。',
+    oauthNotConfigured: '该实例未配置此登录方式。',
+    oauthFailed: '登录提供方未能确认您的账户。请确认您在该提供方的邮箱已验证，然后重试。',
   },
   status: {
     logicalBackup: {
       inProgress: '进行中',
       completed: '成功',
       failed: '失败',
-      deleted: '已删除',
       canceled: '已取消',
     },
     physicalBackup: {
@@ -176,7 +203,10 @@ export const zh: typeof en = {
       offline: '离线',
     },
   },
-  intervals: {
+  schedules: {
+    hours: '小时',
+    minutes: '分钟',
+    timePeriod: '上午或下午',
     types: {
       hourly: '每小时',
       daily: '每天',
@@ -193,18 +223,19 @@ export const zh: typeof en = {
       sat: '周六',
       sun: '周日',
     },
-    periods: {
-      day: '1 天',
-      week: '1 周',
-      month: '1 个月',
-      threeMonths: '3 个月',
-      sixMonths: '6 个月',
-      year: '1 年',
-      twoYears: '2 年',
-      threeYears: '3 年',
-      fourYears: '4 年',
-      fiveYears: '5 年',
-      forever: '永久',
+    weekday: '星期',
+    dayOfMonth: '每月日期',
+    cronExpression: 'Cron 表达式（UTC）',
+    timeOfDay: '时间',
+    nextRun: '下次运行：{{time}}',
+    invalidCron: '无效的 Cron 表达式',
+    cronHelp: {
+      format: 'Cron 格式：分钟 小时 日 月 星期（UTC）',
+      examples: '示例：',
+      dailyAt2am: '每天 2:00（UTC）',
+      every6Hours: '每 6 小时一次',
+      mondaysAt3am: '每周一 3:00（UTC）',
+      twiceAMonth: '每月 1 日和 15 日 4:30（UTC）',
     },
   },
   auditLogs: {
@@ -216,10 +247,9 @@ export const zh: typeof en = {
       created: '时间',
     },
     systemUser: '系统',
-    loadedOfTotal: '已加载：{{loaded}} / {{total}}',
     empty: '没有审计日志。',
     loadingMore: '正在加载更多日志…',
-    allLoaded: '已加载全部日志（共 {{count}} 条）',
+    allLoaded: '已加载全部日志',
   },
   settings: {
     title: 'Databasus 设置',
@@ -255,6 +285,7 @@ export const zh: typeof en = {
       docs: '连接邮件服务器的方法见 <docsLink>SMTP 文档</docsLink>。',
       sendTestEmail: '发送测试邮件',
       testEmailSent: '测试邮件已发送至 {{email}}',
+      testEmailNotDelivered: '邮件服务器未接受发往 <email/> 的测试邮件：<failureDetail/>',
     },
     healthcheck: {
       title: '可用性检查',
@@ -303,6 +334,8 @@ export const zh: typeof en = {
       title: '添加要备份的数据库',
       namePlaceholder: '我最爱的数据库',
       creating: '正在创建数据库…',
+      finishing: '正在完成数据库设置…',
+      createdButNotFinished: '数据库已创建，但设置尚未完成。原因：{{reason}}',
       complete: '完成',
       backupType: {
         title: '选择备份类型',
@@ -322,9 +355,7 @@ export const zh: typeof en = {
       lastBackupError: {
         title: '上次备份出错',
         errorLabel: '错误：',
-        clearHint: '清除此错误（任选其一）：',
-        clearByTestingConnection: '- 用下方按钮测试连接（即使你已经修改了设置）；',
-        clearByNextBackup: '- 等待下一次备份成功完成；',
+        clearedByNextBackup: '下一次备份成功完成后，此错误会自动清除。',
       },
       sections: {
         database: '数据库设置',
@@ -349,7 +380,6 @@ export const zh: typeof en = {
       replace: '替换',
     },
     fields: {
-      databaseType: '数据库类型',
       version: '{{engine}} 版本',
       databaseName: '数据库名',
       sslMode: 'SSL 模式',
@@ -380,6 +410,7 @@ export const zh: typeof en = {
       clipboardReadFailed: '无法读取剪贴板。请检查浏览器权限。',
       connectionStringParsed: '已解析连接字符串',
       connectionStringParsedWithoutPassword: '已解析连接字符串，请手动输入密码。',
+      connectionTestFailed: '无法连接到数据库：{{error}}',
       connectionTestPassed: {
         title: '连接测试通过',
         description: '可以继续下一步',
@@ -535,12 +566,12 @@ export const zh: typeof en = {
         title: '存储',
         transferExisting: '连同现有存储一起转移',
         selectFromTarget: '从目标工作区选择存储',
-        blocked: '使用此存储的数据库：{{count}}。其他数据库依赖该存储，因此无法转移。',
+        blocked: '其他数据库也备份到此存储，因此无法随此数据库一起转移。',
         canTransfer: '存储可以转移',
         selectPlaceholder: '选择存储',
         createNew: '新建存储',
         addTitle: '添加存储',
-        description: '存储是存放备份的位置（本地磁盘、S3、Google Drive 等）',
+        description: '存储是存放备份的位置（本地磁盘、S3 等）',
       },
       notifiers: {
         title: '通知渠道（可选）',
@@ -710,13 +741,13 @@ export const zh: typeof en = {
       notifyWhenUnavailable: '不可用时通知',
       checkIntervalMinutes: '检查间隔（分钟）',
       attemptsBeforeDown: '判定不可用前的尝试次数',
-      storeAttemptsDays: '记录保留时长（天）',
+      attemptRetentionDays: '记录保留时长（天）',
       tooltips: {
         enable: '为此数据库启用或禁用可用性检查',
         notifyWhenUnavailable: '数据库变为不可用时发送通知',
         checkIntervalMinutes: '多久检查一次数据库的可用性（分钟）',
         attemptsBeforeDown: '失败多少次后将数据库标记为不可用',
-        storeAttemptsDays: '可用性检查记录保留多少天',
+        attemptRetentionDays: '可用性检查记录保留多少天',
       },
     },
   },
@@ -736,7 +767,7 @@ export const zh: typeof en = {
       submit: '创建工作区',
       defaultName: '我的工作区',
       description:
-        '工作区用来集中管理：<lineBreak/>- 你的数据库；<lineBreak/>- 存储（本地磁盘、S3、Google Drive 等）；<lineBreak/>- 通知渠道（邮件、Slack、Telegram 等）；<lineBreak/>- 访问控制（如果你有团队）。',
+        '工作区用来集中管理：<lineBreak/>- 你的数据库；<lineBreak/>- 存储（本地磁盘、S3 等）；<lineBreak/>- 通知渠道（邮件、Slack、Telegram 等）；<lineBreak/>- 访问控制（如果你有团队）。',
       nameRequired: '请输入工作区名称',
       created: '工作区已创建',
       permissionDenied: {
@@ -797,6 +828,7 @@ export const zh: typeof en = {
         description:
           '该用户还没有注册，但已受邀加入工作区。用这个邮箱注册后，将自动成为工作区成员。',
       },
+      invitedMark: '已邀请',
       roleChanged: '成员角色已更新',
       remove: {
         tooltip: '移除成员',
@@ -838,6 +870,7 @@ export const zh: typeof en = {
       newPassword: '新密码',
     },
     validation: {
+      emailInvalid: '请输入有效的电子邮件地址',
       nameRequired: '请输入姓名',
       emailRequired: '请输入邮箱',
       passwordTooShort: '密码长度至少为 {{minLength}} 个字符',
@@ -854,6 +887,9 @@ export const zh: typeof en = {
       submit: '登录',
       noAccount: '还没有账号？<signUpLink>注册</signUpLink>',
       forgotPassword: '忘记密码？',
+      setPassword: '设置密码',
+      passwordRecoveryHint: '请通过密码找回功能设置密码。',
+      contactAdministratorHint: '请联系管理员恢复访问权限。',
     },
     signInCode: {
       title: '输入验证码',
@@ -909,12 +945,12 @@ export const zh: typeof en = {
         passwordsDoNotMatch: '两次输入的新密码不一致',
         changing: '正在修改密码…',
         submit: '修改密码',
-        signedInWithNewPassword: '已使用新密码登录',
+        signInRequired: '密码已更改。请使用新密码重新登录。',
       },
     },
     list: {
       title: 'Databasus 用户',
-      loadedOfTotal: '用户：{{loaded}} / {{total}}',
+      loaded: '已加载用户：{{count}}',
       searchPlaceholder: '按邮箱或姓名搜索',
       empty: '没有找到用户。',
       allLoaded: '已加载全部用户（共 {{count}} 位）',
@@ -938,6 +974,7 @@ export const zh: typeof en = {
   },
   verification: {
     triggers: {
+      afterBackup: '备份完成后',
       manual: '手动',
       scheduled: '定时',
     },
@@ -953,18 +990,6 @@ export const zh: typeof en = {
       afterBackup: '备份后',
       afterBackupHint:
         '每次备份成功后自动运行。如果队列中还有待处理的验证，会将其取消，以免备份快于验证时队列无限增长。',
-      weekday: '每周验证日',
-      dayOfMonth: '每月验证日',
-      timeOfDay: '验证时间',
-      cron: {
-        expression: 'Cron 表达式（UTC）',
-        format: 'Cron 格式：分钟 小时 日 月 星期（UTC）',
-        examples: '示例：',
-        exampleEverySunday: '- {{expression}}：每周日 4:00（UTC）',
-        exampleEverySixHours: '- {{expression}}：每 6 小时一次',
-        nextRun: '下次运行：{{dateTime}}<lineBreak/>（{{relativeTime}}）',
-        invalid: '无效的 Cron 表达式',
-      },
       notifications: '通知',
       noNotifications: '无',
     },
@@ -990,8 +1015,14 @@ export const zh: typeof en = {
       },
       details: {
         title: '恢复验证详情',
-        loadFailed: '无法加载恢复验证详情。',
         cancellationReason: '取消原因',
+        diagnostic: {
+          title: '错误详情',
+          truncated: '为符合 64 KB 的大小限制，已省略部分中间内容。',
+          unavailable: '此次验证未保存详细诊断信息。',
+          copied: '已复制诊断信息',
+          copyFailed: '无法复制诊断信息。请手动选择并复制文本。',
+        },
         failure: '失败原因',
         sections: {
           status: '状态',
@@ -1028,7 +1059,7 @@ export const zh: typeof en = {
       },
       capacity: {
         cpu: '{{count}} 个 CPU',
-        ram: '{{count}} GB 内存',
+        ram: '{{size}} 内存',
         disk: '{{count}} GB 磁盘',
         jobs: '任务数：{{count}}',
         notReported: '尚未上报',
@@ -1119,7 +1150,6 @@ export const zh: typeof en = {
       hasSendError: '发送出错',
     },
     create: {
-      title: '添加通知渠道',
       namePlaceholder: '我的聊天',
     },
     config: {
@@ -1133,10 +1163,11 @@ export const zh: typeof en = {
         clearByNextNotification: '- 等待下一条通知成功发送；',
       },
       removeConfirmation: '确定要删除这个通知渠道吗？此操作无法撤销。',
-      removeBlockedByDatabases: '有数据库正在使用这个通知渠道。请先在这些数据库中移除它。',
     },
+    secretKeptPlaceholder: '已保存，留空则保持不变',
     testNotification: {
       send: '发送测试通知',
+      notDelivered: '测试消息未送达：{{error}}',
       sent: {
         title: '测试通知已发送',
         description: '测试通知发送成功',
@@ -1159,6 +1190,11 @@ export const zh: typeof en = {
       skipTls: '跳过 TLS 验证',
     },
     email: {
+      validation: {
+        targetEmail: '请输入有效的电子邮件地址',
+        smtpHost: '请输入 SMTP 主机',
+        smtpPort: '请输入 1 到 65535 之间的端口',
+      },
       targetEmail: '收件邮箱',
       targetEmailTooltip: '接收通知的邮箱地址',
       smtpHost: 'SMTP 主机',
@@ -1223,9 +1259,10 @@ export const zh: typeof en = {
       customHeaders: '自定义请求头',
       customHeadersTooltip:
         '为 Webhook 请求添加自定义 HTTP 请求头（例如 Authorization、X-API-Key）',
-      savedHeadersHidden: '*出于安全考虑，已保存的请求头不予显示',
+      savedHeadersHidden: '*已保存请求头的值不予显示。值留空则保持不变',
       headers: '请求头',
       headerNamePlaceholder: '请求头名称',
+      headerNameInvalid: "只能使用拉丁字母、数字和字符 !#$%&'*+-.^_`|~，不能包含空格。",
       headerValuePlaceholder: '请求头值',
       addHeader: '添加请求头',
       hiddenHeaderValue: '（已隐藏）',
@@ -1264,8 +1301,6 @@ export const zh: typeof en = {
       powerAutomateUrlLabel: 'Power Automate URL：',
       powerAutomateUrlTooltip:
         '你的 Power Automate 流中的 HTTP 端点（When an HTTP request is received 触发器）',
-      showFullUrl: '显示',
-      hideFullUrl: '隐藏',
     },
     mattermost: {
       howToConnect: '如何连接 Mattermost？',
@@ -1303,6 +1338,16 @@ export const zh: typeof en = {
     },
   },
   backups: {
+    cleanup: {
+      pending: '正在删除旧文件。剩余文件：{{count}}。',
+      retrying: '将重试删除的文件：{{count}}。',
+      retryStatus: '刷新状态',
+    },
+    storageSwitch: {
+      warning:
+        '切换存储会立即移除旧备份历史并启用新存储。旧文件将在后台删除。存储不可访问会延迟清理。明确删除旧存储将停止自动清理，剩余文件需要手动删除。新的物理备份从 FULL 开始。',
+      confirm: '切换存储并移除历史记录',
+    },
     encryption: {
       none: '无',
       encrypted: '已启用',
@@ -1312,6 +1357,7 @@ export const zh: typeof en = {
       encrypted: '加密备份文件',
     },
     list: {
+      totalUsage: '总占用：{{size}}',
       title: '备份',
       scheduledBackupsDisabled: '定时备份已禁用（可以在备份配置中重新启用）',
       empty: '还没有备份',
@@ -1332,6 +1378,7 @@ export const zh: typeof en = {
       },
     },
     filters: {
+      toggle: '筛选',
       allTypes: '全部类型',
       allStatuses: '全部状态',
       before: '早于',
@@ -1342,28 +1389,10 @@ export const zh: typeof en = {
       selectStorage: '选择存储',
       createNewStorage: '新建存储',
       addStorageTitle: '添加存储',
-      storageDescription: '存储是存放备份的位置（本地磁盘、S3、Google Drive 等）',
-      storageChangeWarning: '如果更换存储，该存储中的所有备份都会被删除。',
-      storageChangeAcknowledge: '我已了解',
+      storageDescription: '存储是存放备份的位置（本地磁盘、S3 等）',
       encryption: '加密',
       notifications: '通知',
       noNotifications: '无',
-      schedule: {
-        weekday: '星期',
-        dayOfMonth: '每月日期',
-        cronExpression: 'Cron 表达式（UTC）',
-        timeOfDay: '时间',
-        nextRun: '下次运行：{{time}}',
-        invalidCron: '无效的 Cron 表达式',
-        cronHelp: {
-          format: 'Cron 格式：分钟 小时 日 月 星期（UTC）',
-          examples: '示例：',
-          dailyAt2am: '每天 2:00（UTC）',
-          every6Hours: '每 6 小时一次',
-          mondaysAt3am: '每周一 3:00（UTC）',
-          twiceAMonth: '每月 1 日和 15 日 4:30（UTC）',
-        },
-      },
       gfs: {
         hourly: '每小时：{{count}}',
         daily: '每天：{{count}}',
@@ -1374,8 +1403,21 @@ export const zh: typeof en = {
       },
     },
     logical: {
+      retentionPeriods: {
+        day: '1 天',
+        week: '1 周',
+        month: '1 个月',
+        threeMonths: '3 个月',
+        sixMonths: '6 个月',
+        year: '1 年',
+        twoYears: '2 年',
+        threeYears: '3 年',
+        fourYears: '4 年',
+        fiveYears: '5 年',
+        forever: '永久',
+      },
       retentionPolicyTypes: {
-        gfs: 'GFS（保留最近 N 个每小时、每天、每周、每月和每年的备份）',
+        gfs: 'GFS（按日历周期保留）',
         timePeriod: '按时间段（最近 N 天）',
         count: '按数量（最近 N 个备份）',
       },
@@ -1388,7 +1430,7 @@ export const zh: typeof en = {
         makeBackupNow: '立即创建备份',
         encrypted: '已加密',
         sizeTooltip:
-          '上方：实际存放在存储（本地、S3、Google Drive 等）中的压缩后备份文件大小。下方（灰色）：备份时数据库未压缩的原始大小。备份通常能压缩到原来的五分之一左右。',
+          '上方：实际存放在存储（本地、S3 等）中的压缩后备份文件大小。下方（灰色）：备份时数据库未压缩的原始大小。备份通常能压缩到原来的五分之一左右。',
         databaseSize: '{{size}}（数据库大小）',
         deleteConfirmation: '确定要删除这个备份吗？',
         actions: {
@@ -1412,9 +1454,6 @@ export const zh: typeof en = {
       },
       config: {
         interval: '备份周期',
-        weekday: '每周备份日',
-        dayOfMonth: '每月备份日',
-        timeOfDay: '备份时间',
         encryptionTooltip:
           '备份加密后，存储（S3、本地等）中的备份文件无法直接使用。你可以通过 Databasus 恢复备份，或用“下载”按钮下载解密后的文件。',
         retentionPolicy: '保留策略',
@@ -1425,9 +1464,14 @@ export const zh: typeof en = {
           countValue: '保留最近 {{count}} 个备份',
           showGfsHint: '什么是 GFS（祖父-父-子）？',
           hideGfsHint: '隐藏',
-          gfsHint:
-            'GFS（祖父-父-子）轮换：保留最近 N 个每小时、每天、每周、每月和每年的备份。这样可以在合理的存储空间内长期保留备份。',
-          gfsTooltip: 'GFS（祖父-父-子）轮换：保留最近 N 个每小时、每天、每周、每月和每年的备份。',
+          gfsHint: {
+            summary: 'GFS 保留最近的备份，并将部分旧备份保存更长时间。',
+            selection:
+              '<strong>选择要保留多少份备份</strong>，分别按小时、天、周、月和年设置。只计算成功的备份。',
+            fileCount:
+              '<strong>同一份备份可以同时满足多项设置</strong>，因此文件总数可能与设置值之和不同。',
+          },
+          gfsTooltip: 'GFS：保留最近的日历小时和天、已结束的周、月和年，并保护当前周期的候选备份。',
           gfsFields: {
             hourly: '每小时备份',
             daily: '每天备份',
@@ -1467,8 +1511,8 @@ export const zh: typeof en = {
         walGap: 'WAL 缺口',
       },
       list: {
-        totalUsage: '总占用：{{size}}',
         backUpNow: '立即备份',
+        startRequirement: '要启动备份，请在备份配置中启用备份并选择存储。',
         fullBackup: '全量备份',
         incrementalBackup: '增量备份',
         restore: '恢复',
@@ -1520,12 +1564,21 @@ export const zh: typeof en = {
         chainsKept: '保留的备份链',
         fullBackupsKept: '保留的全量备份',
         fullBackupsCountValue: '最近 {{count}} 个',
+        gfsHint: {
+          summary: 'GFS 保留最近的完整备份，并将部分旧备份保存更长时间。',
+          selection:
+            '<strong>选择要保留多少份备份</strong>，分别按小时、天、周、月和年设置。只计算成功的备份。',
+          fileCount:
+            '<strong>同一份备份可以同时满足多项设置</strong>，因此文件总数可能与设置值之和不同。',
+          scope: '<strong>GFS 只适用于完整备份。</strong>增量备份和 WAL 的保留方式需单独设置。',
+        },
         gfsTooltip:
-          'GFS（祖父-父-子）轮换：保留最近 N 个每小时、每天、每周、每月和每年的全量备份。',
+          'GFS：保留最近日历小时和天以及已结束周、月和年的成功完整备份，并保护当前周期的候选备份。',
       },
       restore: {
         errorHints: {
-          downloadInProgress: '这个数据库已有一个恢复下载正在进行。请等待它完成后重试。',
+          downloadInProgress: '您已有一个备份下载或恢复数据流正在进行。请等待它完成后重试。',
+          noRestorableBackup: '请运行一次全量备份，等待完成后重试。',
           targetTimeUnreachable:
             '无法恢复到所选的目标时间：WAL 存在缺口，或者时间超出了可用范围。请选择其他时间，或恢复到最新的可用时间点。',
         },
@@ -1539,6 +1592,7 @@ export const zh: typeof en = {
           '下载链接只能使用一次，15 分钟后失效。如果命令因 401 失败，重新打开此对话框即可生成新链接。',
         copied: '已复制',
         methods: {
+          label: '恢复方式',
           script: '使用脚本',
           manual: '手动',
         },
@@ -1618,13 +1672,6 @@ export const zh: typeof en = {
           needsAttention: '需要注意',
           info: '提示',
         },
-        keepingUpStates: {
-          unknown: '未知',
-          fallingBehind: '跟不上',
-          catchingUp: '正在追赶',
-          idle: '空闲',
-          keepingUp: '跟得上',
-        },
         banner: {
           collectingDataDescription: '流式传输已开始，一分钟内会出现第一批数据。',
           notStreamingDescription:
@@ -1663,6 +1710,13 @@ export const zh: typeof en = {
             '按这个速度，大约 {{duration}}后数据库将删除 Databasus 尚未接收的变更。',
         },
         reasons: {
+          systemIdentifierMismatch: {
+            title: '地址指向了其他集群',
+            whatHappened:
+              'Databasus 已停止接收更改，因为该地址指向了其他 PostgreSQL 集群。现有备份会保留。',
+            whatToDo:
+              '请将路由恢复为原始集群。Databasus 会自动重试，并在经过验证的流恢复后清除此错误。',
+          },
           streamingStopped: {
             title: '保存已停止',
             whatHappened: 'Databasus 在 {{duration}}前停止接收变更。',
@@ -1862,15 +1916,21 @@ export const zh: typeof en = {
     },
   },
   storages: {
+    usageUnavailable: '无法更新备份占用空间。',
+    cleanup: {
+      title: '清理仍在进行中',
+      warning:
+        '我们正在删除此存储中不再需要的备份文件，通常是因为数据库已被删除或改用了其他存储。清理一般很快就会完成。如果你现在删除此存储，自动清理将停止，剩余的备份文件需要你手动删除。',
+      wait: '等待',
+      deleteAnyway: '仍然删除',
+    },
     types: {
       local: '本地存储',
       s3: 'S3',
-      googleDrive: 'Google Drive',
       nas: 'NAS',
       azureBlob: 'Azure Blob Storage',
       ftp: 'FTP',
       sftp: 'SFTP',
-      rclone: 'Rclone',
     },
     s3StorageClasses: {
       default: '默认（Standard）',
@@ -1886,10 +1946,13 @@ export const zh: typeof en = {
       connectionString: '连接字符串',
     },
     sftpAuthMethods: {
+      both: '密码和私钥',
       password: '密码',
       privateKey: '私钥',
     },
     list: {
+      searchPlaceholder: '搜索存储',
+      noSearchResults: '没有找到与“{{query}}”匹配的存储',
       addStorage: '添加存储',
       description: '存储是存放备份的位置（本地磁盘、S3 等）',
       backToList: '← 返回存储列表',
@@ -1898,27 +1961,18 @@ export const zh: typeof en = {
       type: {
         local: '类型：本地存储',
         s3: '类型：S3',
-        googleDrive: '类型：Google Drive',
         nas: '类型：NAS',
         azureBlob: '类型：Azure Blob Storage',
         ftp: '类型：FTP',
         sftp: '类型：SFTP',
-        rclone: '类型：Rclone',
       },
-      hasSaveError: '保存出错',
     },
     config: {
       namePlaceholder: '输入名称',
       settingsTitle: '存储设置',
-      lastSaveError: {
-        title: '保存错误',
-        errorLabel: '错误：',
-        clearHint: '清除此错误（任选其一）：',
-        clearByTestingConnection: '- 用下方按钮测试连接（即使你已经修改了设置）；',
-        clearByNextSave: '- 等待下一次保存成功完成；',
-      },
-      removeConfirmation: '确定要删除这个存储吗？此操作无法撤销。使用该存储的备份也会一并删除。',
-      removeBlockedByDatabases: '有数据库正在使用这个存储。请先在这些数据库中移除它。',
+      removeConfirmation: '确定要删除这个存储吗？此操作无法撤销。',
+      removeBlockedByBackups:
+        '有备份配置正在使用这个存储，或其中仍有备份。请先将这些备份配置改为其他存储，并删除其中的备份。',
     },
     actions: {
       testConnection: '测试连接',
@@ -1927,6 +1981,7 @@ export const zh: typeof en = {
       title: '连接测试成功',
       description: '存储连接测试通过',
     },
+    connectionTestFailed: '无法连接到存储：{{error}}',
     transfer: {
       title: '将存储转移到其他工作区',
       blockedByDatabases: '有数据库正在使用这个存储。请先转移或删除相关数据库。',
@@ -1937,7 +1992,6 @@ export const zh: typeof en = {
     },
     fields: {
       path: '路径',
-      remotePath: '远程路径',
       share: '共享名',
       domain: '域',
       useSsl: '使用 SSL',
@@ -1963,10 +2017,7 @@ export const zh: typeof en = {
       accountName: '账户名',
       accountKey: '账户密钥',
       containerName: '容器名称',
-      clientId: '客户端 ID',
-      clientSecret: '客户端密钥',
       userToken: '用户令牌',
-      config: '配置',
     },
     edit: {
       namePlaceholder: '我的存储',
@@ -1992,10 +2043,6 @@ export const zh: typeof en = {
         storageClassTooltip:
           '上传对象使用的 S3 存储类别。保持默认即为 Standard。部分服务商提供更便宜的类别，例如 One Zone IA。不要使用 Glacier/Deep Archive：恢复时文件必须能立即访问。',
       },
-      googleDrive: {
-        guideLink: '如何连接 Google Drive？',
-        authorize: '授权',
-      },
       nas: {
         shareWithSlashWarning:
           '共享名只能填写单个共享的名称。子目录请填在“路径”字段中（例如共享名：Databasus，路径：DB1）',
@@ -2017,18 +2064,14 @@ export const zh: typeof en = {
           '跳过 TLS 证书验证。如果 FTP 服务器使用自签名证书，请开启此项。警告：这会降低安全性。',
       },
       sftp: {
+        savedPassword: '已保存密码。留空即可保留。',
+        savedPrivateKey: '已保存私钥。留空即可保留。',
+        requiredPassword: '请输入此登录方式所需的密码。',
+        requiredPrivateKey: '请输入此登录方式所需的私钥。',
         privateKeyTooltip: '粘贴你的 SSH 私钥（PEM 格式）。支持 RSA、DSA、ECDSA 和 Ed25519 密钥。',
         skipHostKeyVerification: '跳过主机密钥验证',
         skipHostKeyTooltip:
           '跳过 SSH 主机密钥验证。如果你信任该服务器，可以开启此项。警告：这会降低安全性。',
-      },
-      rclone: {
-        configTooltip:
-          "在此粘贴 rclone.conf 的内容。运行 'rclone config file' 可以找到该文件，然后复制其中的内容。这份配置支持 70 多家云存储服务商。",
-        configHiddenNote: '*内容已隐藏，以免泄露敏感数据。如需更新现有配置，请在此填入新的配置',
-        docsLink: 'Rclone 文档',
-        remotePathTooltip:
-          "远程存储上存放备份的可选路径前缀（例如 '/backups' 或 'my-folder/backups'）",
       },
     },
   },

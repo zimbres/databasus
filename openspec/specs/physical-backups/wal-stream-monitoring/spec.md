@@ -129,28 +129,29 @@ Databasus SHALL delete samples older than 7 days at least once an hour, whether 
 
 ### Requirement: Only users who can view the database can read its WAL stream statistics
 
-The WAL stream statistics of a database SHALL be returned only to an authenticated user who can view that database. Any other request SHALL be refused, the same way the other physical backup endpoints refuse it. The statistics SHALL contain no connection details, credentials, error messages from the source or WAL contents.
+The WAL stream statistics of a database and the current values of its WAL stream SHALL be returned only to an authenticated user who can view that database. A user who is neither a member of the database's workspace nor an instance admin SHALL get `404` with `code` `not_found`, the same answer as for a database that does not exist. A request without a valid session SHALL get `401` with `code` `unauthenticated`. The statistics and the current values SHALL contain no connection details, credentials, error messages from the source or WAL contents.
 
 #### Scenario: Member of the database's workspace
 
-- **WHEN** a member of the workspace that owns the database requests its statistics
-- **THEN** the statistics are returned
+- **WHEN** a member of the workspace that owns the database requests its statistics and its current values
+- **THEN** both are returned
 
 #### Scenario: User from another workspace
 
-- **WHEN** a user without access to the database's workspace requests its statistics
-- **THEN** the request is refused
+- **WHEN** a user without access to the database's workspace requests its statistics or its current values
+- **THEN** the response is `404` with `code` `not_found`
+- **AND** no statistics or values are returned
 
 #### Scenario: Unauthenticated request
 
-- **WHEN** a request without valid authentication asks for statistics
-- **THEN** the request is refused with an authentication error
+- **WHEN** a request without valid authentication asks for statistics or current values
+- **THEN** the response is `401` with `code` `unauthenticated`
 
 #### Scenario: Nonexistent database
 
-- **WHEN** an authenticated user requests statistics for a database ID that does not exist
-- **THEN** the request is refused
-- **AND** no statistics are returned
+- **WHEN** an authenticated user requests statistics or current values for a database ID that does not exist
+- **THEN** the response is `404` with `code` `not_found`
+- **AND** no statistics or values are returned
 
 ### Requirement: The statistics API is a documented, unit-explicit contract
 
@@ -313,7 +314,7 @@ The statistics SHALL also list notices, which never change the verdict:
 
 - **WHEN** the newest chain has a WAL gap below the archive progress point, an incremental backup of that chain completed after the gap, and every segment after that backup is archived without a gap
 - **THEN** the WAL chain broken reason is not listed
-- **AND** the latest restorable moment is the time Databasus received the newest archived segment
+- **AND** the latest restorable moment is the latest confirmed inclusive PITR bound from source transaction timestamps in contiguous archived WAL
 
 #### Scenario: Gap after the newest incremental backup
 
@@ -680,31 +681,33 @@ A refresh SHALL keep the previous content on screen until the new content arrive
 
 ### Requirement: The statistics state what the backups can restore
 
-The statistics SHALL state the latest moment to which the database's backups can restore it at the time of the request. That moment SHALL be the one a restore to the latest available point reaches. It starts from the newest completed backup of the newest chain, full or incremental, and extends through the WAL that follows that backup without a gap. With WAL after that backup, it is the time Databasus received the last segment before the first gap after that backup, or the newest segment when there is no such gap. Without WAL after that backup, it is the backup's completion time. When no full backup has completed, the statistics SHALL state that no moment can be restored yet.
+The statistics SHALL state the latest moment to which the database's backups can restore it at the time of the request. That moment SHALL be the latest confirmed explicit PITR target. A latest restore without a target may also apply the final transaction that confirms this boundary. Archived WAL on a timeline above 1 SHALL extend recovery only after that timeline's verified history is published under the current backup storage selection. Timeline 1 needs no history file. Without required history, the latest restorable moment SHALL be the newest completed backup's completion time, and each completed backup opens only its own completion point rather than a stretch through subsequent WAL. These values SHALL use the same prerequisite as restore token issuance and restore downloads.
 
-The statistics SHALL also state the stretches of time the newest chain can restore to, oldest first. Each completed backup of that chain, full or incremental, opens a stretch from its completion time to the moment the WAL after it reaches without a gap, by the same rule as above. Stretches that overlap or touch SHALL be merged. A WAL segment that is still being uploaded SHALL end a stretch like a gap. The last stretch SHALL end at the latest restorable moment. Without a completed full backup, the list SHALL be empty.
+That moment starts from the newest completed backup of the newest chain, full or incremental, and, when the history prerequisite is satisfied, extends through the WAL that follows that backup without a gap. With eligible WAL after that backup, complete COMMIT or ABORT records in the selected timeline's contiguous published run SHALL confirm the upper bound. Because inclusive time recovery stops before a transaction strictly later than the target, this bound SHALL be one microsecond before the latest confirming source timestamp, never earlier than the completed-backup anchor. Receipt or upload time SHALL NOT extend it. A segment without timestamp evidence SHALL preserve the previously confirmed bound. Source time SHALL use the maximum trusted transaction timestamp even when timestamps decrease in WAL order. Without eligible WAL after that backup, it is the backup's completion time. When no full backup has completed, the statistics SHALL state that no moment can be restored yet.
+
+The statistics SHALL also state the stretches of time the newest chain can restore to, oldest first. When the history prerequisite is satisfied, each completed backup of that chain, full or incremental, opens a stretch from its completion time to the moment the WAL after it reaches without a gap, by the same rule as above. Stretches that overlap or touch SHALL be merged. A WAL segment that is still being uploaded SHALL end a stretch like a gap. The last stretch SHALL end at the latest restorable moment. Without a completed full backup, the list SHALL be empty.
 
 #### Scenario: Streaming without gaps
 
-- **WHEN** the newest full backup completed yesterday and every WAL segment since then is archived without a gap
-- **THEN** the latest restorable moment is the time Databasus received the newest archived segment
+- **WHEN** the newest full backup completed yesterday, required timeline history is published or the timeline is 1, and every WAL segment since then is archived without a gap
+- **THEN** the latest restorable moment is the latest confirmed inclusive PITR bound from source transaction timestamps in contiguous archived WAL
 
 #### Scenario: Gap in the newest chain
 
-- **WHEN** the slot was rebuilt at 07:51, which left a WAL gap after the segment received at 07:50, no backup completed after the gap, and segments after the gap keep arriving
+- **WHEN** the history prerequisite is satisfied, the slot was rebuilt at 07:51, which left a WAL gap after a segment confirming an inclusive PITR bound of 07:50, no backup completed after the gap, and segments after the gap keep arriving
 - **THEN** the latest restorable moment is 07:50
-- **AND** a restore to the latest available point reaches the same moment
+- **AND** an explicit PITR request for 07:50 remains eligible
 
 #### Scenario: Incremental backup after the gap
 
-- **WHEN** the newest chain has a WAL gap at 07:51, an incremental backup of that chain completed at 09:00, and every segment after 09:00 is archived without a gap
-- **THEN** the latest restorable moment is the time Databasus received the newest archived segment
-- **AND** the restorable stretches are two: from the full backup's completion to 07:50, and from 09:00 to the newest archived segment
+- **WHEN** the history prerequisite is satisfied, the newest chain has a WAL gap at 07:51, an incremental backup of that chain completed at 09:00, and every segment after 09:00 is archived without a gap
+- **THEN** the latest restorable moment is the latest confirmed inclusive PITR bound from source transaction timestamps in contiguous archived WAL
+- **AND** the restorable stretches are two: from the full backup's completion to 07:50, and from 09:00 to the newest confirmed inclusive PITR bound
 
 #### Scenario: Incremental backup before the gap
 
-- **WHEN** an incremental backup of the newest chain completed at 06:00, and the chain has a WAL gap at 07:51 with segments after it
-- **THEN** the latest restorable moment is the time Databasus received the last segment before the gap
+- **WHEN** the history prerequisite is satisfied, an incremental backup of the newest chain completed at 06:00, and the chain has a WAL gap at 07:51 with segments after it
+- **THEN** the latest restorable moment is the latest confirmed inclusive PITR bound from source transaction timestamps before the gap
 - **AND** the restorable stretches are one, from the full backup's completion to that moment
 
 #### Scenario: Newer full backup
@@ -722,6 +725,19 @@ The statistics SHALL also state the stretches of time the newest chain can resto
 - **WHEN** no full backup of the database has completed
 - **THEN** the statistics state that no moment can be restored yet
 - **AND** the restorable stretches are empty
+
+#### Scenario: Promoted timeline history is still pending
+
+- **WHEN** the newest backup completed at 14:02 on timeline 2, subsequent WAL is archived, and verified history for timeline 2 is not published
+- **THEN** the latest restorable moment is 14:02
+- **AND** restorable stretches do not extend through subsequent WAL
+- **AND** a latest restore reaches 14:02 as well
+
+#### Scenario: History publication enables existing WAL coverage
+
+- **WHEN** verified history for timeline 2 is published and contiguous archived WAL after the newest backup is already available
+- **THEN** the next statistics response extends coverage through that WAL
+- **AND** restore selection reaches the same moment without another completed backup
 
 ### Requirement: The Monitoring tab says to which moment the database can be restored
 
@@ -781,7 +797,7 @@ When a full backup is what repairs the situation, the verdict banner SHALL offer
 
 The not streaming verdict SHALL never offer the button, because Databasus takes no backups while streaming is off. The collecting data verdict SHALL not offer it either: it lasts at most two minutes, and the restore sentence already says whether a first full backup exists.
 
-The button SHALL request a full backup at once, the same way the Backups tab does. While the request runs, the button SHALL show that it is working and SHALL not accept another click. After the request succeeds, the tab SHALL refresh at once, so the banner says that a full backup is on its way without waiting for the next scheduled refresh. A failed request SHALL show the error and leave the button available.
+The button SHALL request a full backup at once, the same way the Backups tab does. While the request runs, the button SHALL show that it is working and SHALL not accept another click. After the request succeeds, the tab SHALL refresh at once, so the banner says that a full backup is on its way without waiting for the next scheduled refresh. While the tab is open, a failed request SHALL show the error and leave the button available.
 
 #### Scenario: Broken chain fixed from the tab
 
@@ -797,7 +813,7 @@ The button SHALL request a full backup at once, the same way the Backups tab doe
 
 #### Scenario: Request refused
 
-- **WHEN** the full backup request fails
+- **WHEN** the full backup request fails while the tab is open
 - **THEN** the tab shows the error
 - **AND** the button can be pressed again
 
@@ -904,7 +920,7 @@ The tab SHALL stop growing at a maximum width of about 1150 px, so on wide scree
 
 ### Requirement: The API serves the current values every second
 
-A second authenticated endpoint SHALL return the current values of a database's running WAL stream, read from the running streamer at the time of the request and not stored: the time of the reading, the local queue and its pause size, whether receiving runs, the archive progress point, the time the newest WAL segment was archived, and how much is not saved to storage yet. The values from the source database, its current position, the slot's status, the slot lag and the remaining allowance, SHALL come from the newest probe of the source that the streamer already makes, at least every 10 seconds, together with the time of that probe; the endpoint SHALL not open a connection to the source itself. Only users who can view the database SHALL read it. While no streamer runs for the database, the response SHALL say so and carry no values.
+A second authenticated endpoint SHALL return the current values of a database's running WAL stream, read from the running streamer at the time of the request and not stored: the time of the reading, the local queue and its pause size, whether receiving runs, the archive progress point, the time the newest WAL segment was archived, and how much is not saved to storage yet. The values from the source database, its current position, the slot's status, the slot lag and the remaining allowance, SHALL come from the newest probe of the source that the streamer already makes, at least every 10 seconds, together with the time of that probe; the endpoint SHALL not open a connection to the source itself. Only users who can view the database SHALL read it, with the answers of the requirement on reading WAL stream statistics. While no streamer runs for the database, the response SHALL say so and carry no values.
 
 #### Scenario: Buffer drains between two samples
 
@@ -928,5 +944,98 @@ A second authenticated endpoint SHALL return the current values of a database's 
 
 #### Scenario: Member without access
 
-- **WHEN** a user who cannot view the database requests its current values
-- **THEN** the request is refused
+- **WHEN** a user who is not a member of the database's workspace and not an instance admin requests its current values
+- **THEN** the response is `404` with `code` `not_found`, as the requirement on reading WAL stream statistics states
+
+### Requirement: The full backup request keeps one owner while the Monitoring tab is open
+
+While a full backup request runs, switching the interface language or receiving a scheduled refresh SHALL keep the button busy, and the button SHALL accept no other click. Messages about the request SHALL use the language current when they appear. Leaving the tab means opening another tab of the database page or selecting another database. When the user leaves, the request SHALL continue on the server, but its answer, including a failure, SHALL show no feedback, start no refresh and leave no refresh running. Hiding the browser tab SHALL not count as leaving.
+
+#### Scenario: The language changes during a request
+
+- **WHEN** the user presses the full backup button, switches the interface language while the request runs and a scheduled refresh arrives
+- **THEN** the button stays busy until the request has answered and the refresh after it has landed, and only one request was sent
+
+#### Scenario: The request fails in the new language
+
+- **WHEN** the language changes while the request runs and the request then fails
+- **THEN** the error appears in the new language, and the button can be pressed again
+
+#### Scenario: The request succeeds in the new language
+
+- **WHEN** the language changes while the request runs and the request then succeeds
+- **THEN** the success message appears in the new language
+
+#### Scenario: The user leaves during a request
+
+- **WHEN** the user opens another tab of the database, such as Backups, while a full backup request runs and the request then succeeds
+- **THEN** no message appears and no statistics request follows
+
+#### Scenario: The request fails after the user leaves
+
+- **WHEN** the user opens another tab of the database while a full backup request runs and the request then fails
+- **THEN** no error appears, and on return the button is offered again because no full backup is pending
+
+#### Scenario: The browser tab is hidden during a request
+
+- **WHEN** the user hides the browser tab while a full backup request runs and the request then succeeds
+- **THEN** the message appears and the button stays busy until the refresh after it has landed
+
+### Requirement: WAL identity refusal is a persistent broken-stream reason
+
+While WAL streaming is enabled, a known mismatch between the actual WAL source and the saved system identifier SHALL produce health level `BROKEN` with reason `SYSTEM_IDENTIFIER_MISMATCH` through existing WAL statistics. The reason SHALL remain observable after a streamer exits, during later startup attempts, and across an ordinary Databasus restart until a verified session against the expected cluster begins streaming. A known mismatch SHALL take priority over collecting-data grace periods and SHALL NOT require two periodic samples before becoming visible.
+
+The live receiver SHALL NOT be reported as running merely because its process was started; its source session must first be verified and have entered WAL streaming. An unrelated SQL connection reaching the expected source SHALL NOT clear a mismatch observed on the WAL connection. Uploading legitimate old queued WAL or recording a periodic sample SHALL NOT clear it either.
+
+#### Scenario: Mismatch occurs before the first sample
+
+- **WHEN** a new WAL session is refused because its source identifier differs before any periodic sample is recorded
+- **THEN** the existing statistics report `BROKEN` with reason `SYSTEM_IDENTIFIER_MISMATCH`
+- **AND** live receiver state is not running
+
+#### Scenario: Reclaim and restart preserve the reason
+
+- **WHEN** a refused streamer is retried or Databasus restarts before a verified WAL session resumes
+- **THEN** the mismatch reason remains visible throughout the new attempt
+
+#### Scenario: SQL reaches the original cluster while WAL reaches another
+
+- **WHEN** a SQL probe succeeds against the expected cluster while the actual WAL session is refused against another cluster
+- **THEN** statistics retain `SYSTEM_IDENTIFIER_MISMATCH` and do not report healthy reception
+
+#### Scenario: Old queue continues uploading
+
+- **WHEN** legitimate queued WAL is archived after an identity refusal
+- **THEN** that successful upload does not clear the mismatch reason
+
+#### Scenario: Verified WAL reception resumes
+
+- **WHEN** a session against the saved identity successfully enters WAL streaming
+- **THEN** the mismatch reason is cleared
+- **AND** normal monitoring determines stream health from then on
+
+#### Scenario: WAL streaming is disabled
+
+- **WHEN** the operator disables WAL streaming while a mismatch remains recorded
+- **THEN** monitoring follows the existing `NOT_STREAMING` behavior
+- **AND** disabling does not establish that the source identity has been verified
+
+#### Scenario: Disabling overlaps terminal refusal persistence
+
+- **WHEN** the receiver has detected an identity mismatch and streaming is disabled before that attempt finishes recording its terminal cause
+- **THEN** disabling does not discard the unresolved refusal
+- **AND** monitoring reports `NOT_STREAMING` while disabled and retains the refusal across restart and re-enable until verified reception resumes
+
+### Requirement: Identity diagnostics identify the refusal and the recovery action
+
+Existing WAL diagnostics and enabled chain-failure notifications SHALL identify a source identity refusal consistently as `SYSTEM_IDENTIFIER_MISMATCH`. Operator guidance SHALL explain that the configured address must again reach the original cluster and that the next verified attempt can resume reception. Diagnostics SHALL NOT recommend accepting a new identifier, discarding the original archive or rebuilding a slot on the unrelated cluster. Connection secrets SHALL NOT appear in diagnostics. Existing notification configuration and throttling SHALL continue to apply.
+
+#### Scenario: Operator inspects a refused stream
+
+- **WHEN** the operator opens existing WAL monitoring after an identity mismatch
+- **THEN** the interface names the source identity problem and explains how reception resumes after the correct source returns
+
+#### Scenario: Chain-failure notification is enabled
+
+- **WHEN** an identity refusal stops reception and the database enables chain-failure notifications
+- **THEN** its existing notification channel receives the identity refusal and recovery guidance under existing throttling rules

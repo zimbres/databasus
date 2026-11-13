@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import LandingFooterComponent from "@/app/components/LandingFooterComponent";
 import LandingHeaderComponent from "@/app/components/LandingHeaderComponent";
-import { OG_LOCALES, getLanguageAlternates, getLocalizedUrl } from "@/app/i18n";
+import { OG_LOCALES, getLanguageAlternates, getLocalizedUrl, getLocalizedHref } from "@/app/i18n";
 import HeroStatsComponent from "@/app/components/HeroStatsComponent";
 import InstallationComponent from "@/app/components/InstallationComponent";
 import LiteYouTubeEmbed from "@/app/components/LiteYouTubeEmbed";
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description:
     "Outil gratuit et open source pour les sauvegardes planifiées de PostgreSQL (avec prise en charge de MySQL et MongoDB). Stockez-les en local et dans le cloud. Notifications vers Slack, Discord, Telegram, e-mail, webhook, etc.",
   keywords:
-    "PostgreSQL, sauvegarde, backup, supervision, base de données, sauvegardes planifiées, Docker, auto-hébergé, open source, S3, Google Drive, notifications Slack, Discord, DevOps, supervision de bases de données, pg_dump, restauration de base de données, chiffrement, AES-256, chiffrement des sauvegardes",
+    "PostgreSQL, sauvegarde, backup, supervision, base de données, sauvegardes planifiées, Docker, auto-hébergé, open source, S3, Azure Blob Storage, notifications Slack, Discord, DevOps, supervision de bases de données, pg_dump, restauration de base de données, chiffrement, AES-256, chiffrement des sauvegardes",
   robots: "index, follow",
   alternates: {
     canonical: getLocalizedUrl("fr", ""),
@@ -82,7 +82,7 @@ export default function Index() {
             },
             featureList: [
               "Sauvegardes planifiées de PostgreSQL",
-              "Plusieurs destinations de stockage (S3, Google Drive, Dropbox, SFTP, rclone, etc.)",
+              "Plusieurs destinations de stockage (S3, Azure Blob Storage, FTP, SFTP, NAS, etc.)",
               "Notifications en temps réel (Slack, Telegram, Discord, webhook, e-mail, etc.)",
               "Supervision de l'état des bases de données",
               "Auto-hébergé via Docker",
@@ -139,7 +139,7 @@ export default function Index() {
                 name: "Qu'est-ce que Databasus et pourquoi l'utiliser plutôt que des scripts écrits à la main ?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Databasus est un service auto-hébergé sous licence Apache 2.0 qui sauvegarde PostgreSQL, de la v13 à la v18. Il se distingue des scripts shell par son interface qui permet de planifier les tâches, de compresser et de stocker les archives vers plusieurs destinations (disque local, S3, Google Drive, Dropbox, SFTP, rclone, etc.), de configurer des politiques de rétention pour supprimer automatiquement les anciennes sauvegardes et de notifier votre équipe lorsque les tâches se terminent ou échouent, le tout sans code écrit à la main",
+                  text: "Databasus est un service auto-hébergé sous licence Apache 2.0 qui sauvegarde PostgreSQL, de la v13 à la v18. Il se distingue des scripts shell par son interface qui permet de planifier les tâches, de compresser et de stocker les archives vers plusieurs destinations (disque local, S3, Azure Blob Storage, FTP, SFTP, NAS, etc.), de configurer des politiques de rétention pour supprimer automatiquement les anciennes sauvegardes et de notifier votre équipe lorsque les tâches se terminent ou échouent, le tout sans code écrit à la main",
                 },
               },
               {
@@ -163,7 +163,7 @@ export default function Index() {
                 name: "Où sont stockées mes sauvegardes et combien d'espace occuperont-elles ?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Les archives peuvent être enregistrées sur des volumes locaux, des buckets compatibles S3, Google Drive, Dropbox et d'autres destinations cloud. Databasus applique une compression équilibrée, qui réduit en général la taille du dump de 4 à 8 fois avec seulement environ 20 % de surcoût d'exécution, ce qui économise du stockage et de la bande passante.",
+                  text: "Les archives peuvent être enregistrées sur des volumes locaux, des buckets compatibles S3, Azure Blob Storage, FTP et d'autres destinations cloud. Databasus applique une compression équilibrée, qui réduit en général la taille du dump de 4 à 8 fois avec seulement environ 20 % de surcoût d'exécution, ce qui économise du stockage et de la bande passante.",
                 },
               },
               {
@@ -179,7 +179,7 @@ export default function Index() {
                 name: "Comment Databasus assure-t-il la sécurité ?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Databasus applique la sécurité à trois niveaux : (1) Chiffrement des données sensibles — tous les mots de passe, jetons et identifiants sont chiffrés avec AES-256-GCM et stockés séparément de la base de données ; (2) Chiffrement des sauvegardes — chaque fichier de sauvegarde est chiffré avec une clé unique dérivée d'une clé maître, de l'ID de la sauvegarde et d'un sel aléatoire, ce qui rend les sauvegardes inutilisables sans votre clé de chiffrement même si quelqu'un accède au stockage ; (3) Accès en lecture seule à la base — Databasus ne requiert que des permissions SELECT et effectue des vérifications complètes pour s'assurer qu'aucun privilège d'écriture n'existe, ce qui empêche toute corruption de données même si l'outil est compromis. La connexion elle-même peut exiger un second facteur : une fois activé, un mot de passe correct est suivi d'un code à six chiffres envoyé à l'adresse du compte, tandis que la connexion par Google ou GitHub continue de s'appuyer sur les vérifications de ces fournisseurs. Au-delà de l'exécution, la sécurité et la fiabilité sont intégrées à chaque commit et PR : analyse statique CodeQL, détection de secrets avec gitleaks, règles de sécurité avec semgrep, surveillance des CVE par Dependabot, scans Trivy des images et Dockerfiles, et audits périodiques Codex Security d'OpenAI. Les tests d'intégration s'exécutent contre de vrais conteneurs PostgreSQL, MySQL, MariaDB et MongoDB et vérifient des cycles complets sauvegarde puis restauration à chaque PR. Les GitHub Actions sont épinglées sur des SHA de commit et les workflows suivent le principe du moindre privilège. Toutes les opérations tournent dans des conteneurs que vous contrôlez sur des serveurs qui vous appartiennent, et comme le projet est open source, votre équipe de sécurité peut auditer chaque ligne de code avant le déploiement.",
+                  text: "Databasus applique la sécurité à trois niveaux : (1) Chiffrement des données sensibles — tous les mots de passe, jetons et identifiants sont chiffrés avec AES-256-GCM et stockés séparément de la base de données ; (2) Chiffrement des sauvegardes — chaque fichier de sauvegarde est chiffré avec une clé unique dérivée d'une clé maître, de l'ID de la sauvegarde et d'un sel aléatoire, ce qui rend les sauvegardes inutilisables sans votre clé de chiffrement même si quelqu'un accède au stockage ; (3) Accès en lecture seule à la base — Databasus ne requiert que des permissions SELECT et effectue des vérifications complètes pour s'assurer qu'aucun privilège d'écriture n'existe, ce qui empêche toute corruption de données même si l'outil est compromis. La connexion elle-même peut exiger un second facteur : une fois activé, un mot de passe correct est suivi d'un code à six chiffres envoyé à l'adresse du compte, tandis que la connexion par Google ou GitHub continue de s'appuyer sur les vérifications de ces fournisseurs. Avant chaque version, des contrôles automatiques analysent le code, les dépendances, les secrets et les images de conteneurs. Les tests vérifient des cycles complets de sauvegarde et de restauration dans de vrais conteneurs PostgreSQL, MySQL, MariaDB et MongoDB. Les contrôles obligatoires doivent réussir avant la publication. Des audits réguliers de Codex Security d’OpenAI les complètent et sont distincts du processus de publication. Toutes les opérations tournent dans des conteneurs que vous contrôlez sur des serveurs qui vous appartiennent, et comme le projet est open source, votre équipe de sécurité peut auditer chaque ligne de code avant le déploiement.",
                 },
               },
               {
@@ -230,6 +230,14 @@ export default function Index() {
                   text: "Le premier compte créé sur l'instance est celui qui l'administre. Si vous ne savez plus quelle est cette adresse, exécutez docker exec -it databasus ./main --list-admins sur le serveur où Databasus tourne : la commande nomme chaque compte administrateur avec son adresse e-mail, son nom affiché, sa date de création et son état d'activité, et n'affiche aucun mot de passe. Pour définir un nouveau mot de passe pour ce compte, exécutez docker exec -it databasus ./main --new-password=\"YourNewSecurePassword123\" --email=\"owner@example.com\". Une instance créée avant que le premier compte ne l'administre porte encore l'adresse provisoire admin tant que son propriétaire ne l'a pas remplacée. Si l'instance exige en plus un code à la connexion et que le serveur de messagerie ne le délivre plus, exécutez docker exec -it databasus ./main --disable-2fa pour qu'elle cesse de le demander. Les trois commandes sont documentées sur la page mot de passe.",
                 },
               },
+              {
+                "@type": "Question",
+                name: "Comment l’IA est-elle utilisée dans le développement de Databasus ?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "L’IA nous aide à développer Databasus dans un cadre d’ingénierie défini. Les personnes définissent l’orientation et prennent les décisions finales. Une personne lit chaque ligne de code avant l’intégration d’un changement. Des agents indépendants examinent le fonctionnement, l’architecture, les tests et la documentation dans des sessions séparées en lecture seule. Une analyse statique stricte et des tests sur de vraies bases de données complètent leurs revues. Les contrôles CI obligatoires doivent réussir avant la publication.",
+                },
+              },
             ],
           }),
         }}
@@ -257,14 +265,13 @@ export default function Index() {
             </div>
 
             <h1 className="text-2xl sm:text-4xl sm:max-w-[300px] md:text-4xl leading-tight font-bold mb-4 md:mb-6 mx-auto md:max-w-[650px]">
-              Sauvegarde PostgreSQL avec Point-in-Time Recovery et vérification
-              de restauration
+              Sauvegarde PostgreSQL
             </h1>
 
             <p className="text-sm sm:text-lg text-gray-200 max-w-[720px] mx-auto mb-6 md:mb-10 px-2">
               Databasus est un outil gratuit, open source et auto-hébergé pour
               faire des backups de PostgreSQL. Créez des sauvegardes vers
-              différents stockages (S3, Google Drive, FTP, etc.) avec des
+              différents stockages (S3, Azure Blob Storage, FTP, etc.) avec des
               notifications sur leur progression (Slack, Discord, Telegram,
               etc.). Avec un focus sur le Point-in-Time Recovery{" "}
               <span className="underline decoration-2 underline-offset-2 decoration-blue-600">
@@ -1091,7 +1098,7 @@ export default function Index() {
                 <div className="space-y-3 max-w-[370px] text-gray-400 text-sm md:text-base">
                   <p>
                     Vous pouvez conserver les fichiers de sauvegarde en local,
-                    dans S3, Google Drive, sur un NAS, Dropbox et d&apos;autres
+                    dans S3, Azure Blob Storage, sur un NAS, FTP et d&apos;autres
                     services
                   </p>
                   <p>
@@ -1224,7 +1231,7 @@ export default function Index() {
             <FaqItem
               number="1"
               question="Qu'est-ce que Databasus et pourquoi l'utiliser plutôt que des scripts écrits à la main ?"
-              answer="Databasus est un service auto-hébergé sous licence Apache 2.0 qui sauvegarde les bases de données. Il se distingue des scripts shell par son interface qui permet de planifier les tâches, de compresser et de stocker les archives vers plusieurs destinations (disque local, S3, Google Drive, NAS, Dropbox, SFTP, rclone, etc.), de configurer des politiques de rétention pour supprimer automatiquement les anciennes sauvegardes et de notifier votre équipe lorsque les tâches se terminent ou échouent, le tout sans code écrit à la main"
+              answer="Databasus est un service auto-hébergé sous licence Apache 2.0 qui sauvegarde les bases de données. Il se distingue des scripts shell par son interface qui permet de planifier les tâches, de compresser et de stocker les archives vers plusieurs destinations (disque local, S3, Azure Blob Storage, NAS, FTP, SFTP, etc.), de configurer des politiques de rétention pour supprimer automatiquement les anciennes sauvegardes et de notifier votre équipe lorsque les tâches se terminent ou échouent, le tout sans code écrit à la main"
             />
             <FaqItem
               number="2"
@@ -1264,25 +1271,20 @@ export default function Index() {
                   sur les vérifications de ces fournisseurs.
                   <br />
                   <br />
-                  Au-delà de l&apos;exécution, la sécurité et la fiabilité sont
-                  intégrées à chaque commit et PR : analyse statique CodeQL,
-                  détection de secrets avec gitleaks, règles de sécurité avec
-                  semgrep, surveillance des CVE par Dependabot, scans Trivy des
-                  images et Dockerfiles, et audits
-                  périodiques Codex Security d&apos;OpenAI. Les tests
-                  d&apos;intégration s&apos;exécutent contre de vrais conteneurs
-                  PostgreSQL, MySQL, MariaDB et MongoDB et vérifient des cycles
-                  complets sauvegarde puis restauration à chaque PR. Les GitHub
-                  Actions sont épinglées sur des SHA de commit et les workflows
-                  suivent le principe du moindre privilège.
+                  Avant chaque version, des contrôles automatiques analysent le code, les
+                  dépendances, les secrets et les images de conteneurs. Les tests vérifient
+                  des cycles complets de sauvegarde et de restauration dans de vrais
+                  conteneurs PostgreSQL, MySQL, MariaDB et MongoDB. Les contrôles obligatoires
+                  doivent réussir avant la publication. Des audits réguliers de Codex Security
+                  d’OpenAI les complètent et sont distincts du processus de publication.
                   <br />
                   <br />
                   Consultez{" "}
                   <a
-                    href="/fr/security#security-and-reliability-engineering"
+                    href={`${getLocalizedHref("fr", "security")}#security-and-reliability-engineering`}
                     className="text-blue-400 hover:text-blue-600"
                   >
-                    Security &amp; reliability engineering
+                    Ingénierie de la sécurité et de la fiabilité
                   </a>{" "}
                   pour le pipeline complet.
                   <br />
@@ -1319,7 +1321,7 @@ export default function Index() {
                   Saisissez ensuite l&apos;hôte de votre PostgreSQL, le port, le
                   nom de la base, les identifiants et la préférence SSL.
                   Choisissez où l&apos;archive doit être envoyée (chemin local,
-                  bucket S3, dossier Google Drive, Dropbox, etc.). <br />
+                  bucket S3, Azure Blob Storage, FTP, etc.). <br />
                   <br />
                   Si besoin, ajoutez des canaux de notification comme
                   l&apos;e-mail, Slack, Telegram ou un webhook et cliquez sur
@@ -1540,6 +1542,32 @@ export default function Index() {
             />
             <FaqItem
               number="12"
+              question="Comment l’IA est-elle utilisée dans le développement de Databasus ?"
+              answer={
+                <>
+                  <p>
+                    L’IA nous aide à développer Databasus dans un cadre d’ingénierie défini. Les personnes
+                    définissent l’orientation et prennent les décisions finales.{" "}
+                    <strong>Une personne lit chaque ligne de code avant l’intégration d’un changement.</strong>
+                  </p>
+                  <p className="mt-3">
+                    Des agents indépendants examinent le fonctionnement, l’architecture, les tests et la
+                    documentation dans des sessions séparées en lecture seule. Une analyse statique stricte et des
+                    tests sur de vraies bases de données complètent leurs revues. Les contrôles CI obligatoires
+                    doivent réussir avant la publication.{" "}
+                    <a
+                      href={`${getLocalizedHref("fr", "faq")}#ai-usage`}
+                      className="text-blue-400 hover:text-blue-600"
+                    >
+                      Découvrez le processus de développement
+                    </a>
+                    .
+                  </p>
+                </>
+              }
+            />
+            <FaqItem
+              number="13"
               question="Comment rejoindre la communauté Databasus ?"
               answer={
                 <>
@@ -1561,7 +1589,7 @@ export default function Index() {
               }
             />
             <FaqItem
-              number="13"
+              number="14"
               question="Quel est le niveau d'adoption de Databasus ?"
               answer={
                 <>
@@ -1598,7 +1626,7 @@ export default function Index() {
               }
             />
             <FaqItem
-              number="14"
+              number="15"
               question="J'ai oublié l'e-mail ou le mot de passe de l'administrateur"
               answer={
                 <>

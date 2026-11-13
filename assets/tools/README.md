@@ -3,8 +3,8 @@ CI, and the Docker image all read from one place. The Go backend
 resolves them at runtime via `runtime.GOOS`+`runtime.GOARCH` →
 `assets/tools/<arch-key>/<db>/<db>-<v>/bin/<command>`.
 
-`AGENTS.md` in this directory carries the checklist for adding a version and
-for refreshing a patch level. Read it before changing anything here.
+The checklist for adding a version and for refreshing a patch level is the
+`client-tool-bundles` skill in `.agents/skills/client-tool-bundles/SKILL.md`.
 
 Layout (one subtree per arch, identical shape):
 
@@ -12,6 +12,8 @@ Layout (one subtree per arch, identical shape):
 assets/tools/<arch>/
   postgresql/postgresql-{12,13,14,15,16,17,18}/bin/
     pg_dump, pg_restore, psql
+  postgresql/postgresql-{17,18}/bin/
+    pg_basebackup, pg_receivewal, pg_combinebackup, pg_waldump
   mysql/mysql-{5.7,8.0,8.4,9,26}/bin/
     mysql, mysqldump
   mysql/mysql-26/lib/private/
@@ -22,7 +24,7 @@ assets/tools/<arch>/
     mongodump, mongorestore
 ```
 
-`<arch>` keys (mapping in `backend/internal/util/tools/paths.go`):
+`<arch>` keys (mapping in `backend/internal/engines/clienttools/bundle_root.go`):
 
 | GOOS / GOARCH     | key   | size    |
 |-------------------|-------|---------|
@@ -54,8 +56,9 @@ a `pg_dump` older than its sibling `pg_basebackup` is how issue #725 (pg_dump
 
 Bundled MySQL patches (identical on both arches, upstream glibc2.28 tarballs
 from `https://cdn.mysql.com/Downloads/MySQL-<dir>/mysql-<patch>-linux-glibc2.28-{x86_64,aarch64}.tar.xz`,
-where `<dir>` is the line for 5.7 through 9 and `<major>.<minor>` from 26 on,
-for example `MySQL-26.7`):
+where `<dir>` is `8.0`, `8.4`, `9.7` or `26.7`. MySQL 5.7 uses the archived
+`mysql-5.7.44-linux-glibc2.12-x86_64.tar.gz` from
+`https://cdn.mysql.com/archives/mysql-5.7/`):
 
 | bundle     | patch  | notes                                     |
 |------------|--------|-------------------------------------------|
@@ -75,7 +78,7 @@ by `tools/refresh-mariadb-bundle.sh`:
 | `mariadb-13.0` | 13.0.2   | `repo/13.0/ubuntu`, `ubu2204`          |
 
 MariaDB ships three client tiers, mapped to server versions in
-`backend/internal/util/tools/mariadb.go`:
+`backend/internal/engines/mariadb/version.go`:
 
 - `10.6` (legacy) serves MariaDB 5.5 and 10.1. It exists because the newer
   clients query `generation_expression`, a column MariaDB added in 10.2.
@@ -129,11 +132,22 @@ binaries, and the loader picks them before the image's copies.
 image as a dependency of `postgresql-common`. A change that drops that package
 takes the MariaDB interactive client with it. It is also the one soname a
 non-Debian development host is missing — Fedora ships the upstream
-`libedit.so.0` — which is what `just run` and `just test` at the repository
-root shim around.
+`libedit.so.0` — which is what `mise run run` and `mise run test` shim around.
 
-To refresh a tool set, run the script for that engine, or drop the
-corresponding `bin/` contents in place, and commit. For PostgreSQL the source
-is `postgresql-client-<major>` from `apt.postgresql.org` for `bookworm`, both
+Exact release versions, vendor build families, archive URLs, SHA256 checksums and committed-file hashes for both
+architectures are recorded in `tools/dependencies/clients.json`. The offline
+`mise run verify-deps` checks these local files and their executable permissions.
+The [upgrade guide](../../docs/how-to-upgrade-deps.md) describes source review
+and download verification. These local hashes preserve the existing MySQL
+binaries; they do not claim byte equality with the archive members. The MongoDB
+tools remain unmodified vendor binaries.
+
+To refresh a tool set, verify its recorded source archive, extract the selected
+programs and update the source records with the resulting file hashes.
+For PostgreSQL the source
+is `postgresql-client-<major>` from `apt.postgresql.org` for `bookworm`; the
+PostgreSQL 17 and 18 `pg_waldump` binaries come from the matching
+`postgresql-<major>` server package at the same pinned patch level. Both use
 `amd64` and `arm64`, matching the `debian:bookworm-slim` runtime base in the
-Dockerfile. Update the tables above in the same commit.
+Dockerfile. The exact package URLs, archive hashes and extracted-file hashes
+are in `tools/dependencies/clients.json`. Update the tables above in the same commit.

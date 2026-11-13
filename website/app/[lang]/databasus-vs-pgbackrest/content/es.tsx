@@ -665,11 +665,10 @@ export default function DatabasusVsPgBackRestPage() {
               <ul>
                 <li>Almacenamiento local</li>
                 <li>Amazon S3 y servicios compatibles con S3</li>
-                <li>Google Drive</li>
                 <li>Cloudflare R2</li>
                 <li>Azure Blob Storage</li>
                 <li>NAS (almacenamiento conectado en red)</li>
-                <li>Dropbox</li>
+                <li>FTP</li>
               </ul>
 
               <h3 id="storage-pgbackrest">Almacenamiento de pgBackRest</h3>

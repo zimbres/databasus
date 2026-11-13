@@ -669,11 +669,10 @@ export default function DatabasusVsBarmanPage() {
               <ul>
                 <li>Stockage local</li>
                 <li>Amazon S3 et services compatibles S3</li>
-                <li>Google Drive</li>
                 <li>Cloudflare R2</li>
                 <li>Azure Blob Storage</li>
                 <li>NAS (stockage en réseau)</li>
-                <li>Dropbox</li>
+                <li>FTP</li>
               </ul>
 
               <h3 id="storage-barman">Stockage avec Barman</h3>

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines how finalized WAL segments of a streaming PostgreSQL database reach storage, how fast that must work against a distant storage, and when Databasus reports archiving as broken or fallen behind.
+Defines how finalized WAL segments of a streaming PostgreSQL database reach storage, how uploads overlap and respond to cancellation, and when Databasus reports archiving as broken or fallen behind.
 
 ## Requirements
 
@@ -12,9 +12,9 @@ For a database in WAL streaming mode, Databasus SHALL upload up to four finalize
 
 #### Scenario: Slow storage with a queued backlog
 
-- **WHEN** eight finalized segments wait in the local queue and each segment's upload, from claim to commit, takes one second
+- **WHEN** eight finalized segments wait in the local queue and the first four uploads are held in progress
 - **THEN** four segments are uploading at once
-- **AND** all eight are archived in about two seconds rather than eight
+- **AND** the remaining four wait until an upload slot becomes available
 
 #### Scenario: Limit is never exceeded
 
@@ -43,19 +43,34 @@ Databasus SHALL NOT start a second upload of a segment while an upload of that s
 - **THEN** the segment's file stays in the local queue
 - **AND** a later pass uploads it again under a new object name
 
-### Requirement: Archiving keeps up with a busy source when the storage is far away
+### Requirement: Storage accepts overlapping segment writes
 
-For a storage of type S3-compatible, Azure Blob, SFTP, FTP, SMB, rclone or local, four concurrent writers SHALL store at least two pairs per second of a 16 MB segment-sized file and a 1 KB metadata file, when every response from the storage arrives 50 ms later than on a local network. These are the files WAL archiving writes for each segment. Google Drive is not covered by this requirement.
+For a storage of type S3-compatible, Azure Blob, SFTP, FTP, SMB or local, four writers SHALL be able to consume independent upload streams while all four writes remain unfinished. Each writer SHALL store a 16 MiB segment-sized file followed by its 1 KiB metadata file without mixing, truncating or overwriting another writer's content. Completion SHALL NOT depend on meeting an elapsed-time or transfer-rate threshold.
 
-#### Scenario: Storage in another region
+#### Scenario: Four uploads overlap
 
-- **WHEN** a storage answers every request 50 ms late and four concurrent writers store twenty-four pairs of a 16 MB file and a 1 KB file
-- **THEN** all twenty-four pairs are stored within twelve seconds
+- **WHEN** four writers start independent segment uploads and each upload source is held before providing its content
+- **THEN** all four writes request content before any source is released
+- **AND** after the sources are released, every segment and metadata file can be read back with its original content
 
-#### Scenario: Local storage
+### Requirement: Consecutive writes reuse storage connections
 
-- **WHEN** four concurrent writers store twenty-four pairs of a 16 MB file and a 1 KB file in a local storage
-- **THEN** all twenty-four pairs are stored within twelve seconds
+For a storage of type S3-compatible, Azure Blob, SFTP, FTP or SMB, consecutive successful writes using unchanged settings SHALL reuse healthy connections. FTP data connections are separate from its reusable control connection.
+
+#### Scenario: Metadata files follow a successful write
+
+- **WHEN** a write establishes a healthy connection and ten metadata files are then written sequentially with unchanged settings
+- **THEN** no additional storage session or HTTP connection is opened for those writes
+
+### Requirement: SFTP streams keep blocks in flight
+
+An SFTP upload from a source whose length is unknown SHALL continue consuming source blocks while an earlier write acknowledgement is pending. The resulting file SHALL retain the complete original content.
+
+#### Scenario: Acknowledgement is withheld
+
+- **WHEN** an SFTP upload has opened its remote file and the response to its first data block is withheld
+- **THEN** the upload consumes another source block before that response is released
+- **AND** after responses resume, the uploaded file can be read back with its original content
 
 ### Requirement: Storage connections opened with old settings are never used again
 
@@ -84,12 +99,12 @@ A write SHALL use only a connection opened with the storage's current settings, 
 
 ### Requirement: A storage that stops answering does not hold an upload
 
-For a storage of type S3-compatible, Azure Blob, SFTP, FTP or SMB, when the storage stops answering in the middle of a write, the write SHALL fail no later than three seconds after the deadline of the operation that started it, and the connection it used SHALL be closed. A later write SHALL NOT reuse that connection. rclone and Google Drive are not covered, because how they wait depends on the remote service behind them.
+For a storage of type S3-compatible, Azure Blob, SFTP, FTP or SMB, cancellation of an upload whose storage has stopped answering SHALL make the write fail without waiting for the storage response. The connection it used SHALL be closed. A later write SHALL NOT reuse that connection. Cancellation checks SHALL observe operation completion rather than enforce a machine-dependent elapsed-time threshold.
 
 #### Scenario: Storage goes silent mid-write
 
-- **WHEN** a storage stops answering while a segment is being written and the segment's upload deadline passes
-- **THEN** the write fails within three seconds after the deadline
+- **WHEN** a storage response is withheld while a segment is being written and the upload is cancelled
+- **THEN** the write fails while the response remains withheld
 - **AND** the upload slot is free for the next segment
 - **AND** the next write to that storage opens a new connection
 
@@ -179,3 +194,125 @@ It SHALL keep reporting how many bytes the archive is behind the source.
 - **WHEN** no segment was archived since the previous entry
 - **THEN** the entry reports no step timings
 - **AND** it still states how many bytes the archive is behind the source
+
+### Requirement: Timeline history is verified against its source cluster
+
+Before publishing new timeline history, Databasus SHALL verify that it was obtained from the configured PostgreSQL cluster and belongs to the requested timeline. A matching file name alone SHALL NOT establish cluster identity. Missing cluster identity, an identity mismatch, a mismatched response name, empty or malformed history, and a timeline that is invalid for the source SHALL prevent publication.
+
+#### Scenario: Another cluster uses the same timeline number
+
+- **WHEN** the source address reaches another cluster with a history file bearing the requested name
+- **THEN** Databasus rejects the history
+- **AND** no artifact, metadata or catalog entry is published for it
+
+#### Scenario: Invalid history response
+
+- **WHEN** the returned history has the wrong name, empty content or invalid ancestor timeline or WAL positions
+- **THEN** Databasus rejects the response before writing it to backup storage
+
+#### Scenario: Earlier history is still pending
+
+- **WHEN** history for an earlier timeline remains pending and the configured cluster has since advanced to a later timeline
+- **THEN** Databasus can publish the earlier history after verifying its cluster and requested timeline
+- **AND** it does not require the requested timeline to equal the cluster's current timeline
+
+### Requirement: Timeline history publication is atomic and repeatable
+
+Databasus SHALL publish a timeline history artifact, its metadata and its catalog entry as one recoverable result. Repeated or concurrent processing of one database's timeline SHALL retain one published history entry and one matching artifact/metadata pair. Unpublished attempts SHALL remain eligible for cleanup. History publication SHALL obey the current backup storage selection and its generation, including when reusing an existing entry.
+
+#### Scenario: The receiver and a FULL process the same history
+
+- **WHEN** WAL reception and FULL completion concurrently process the same timeline
+- **THEN** both resolve to the same published history entry
+- **AND** any losing attempt's files are scheduled for cleanup without deleting the winning pair
+
+#### Scenario: Storage changes during a history upload
+
+- **WHEN** the selected backup storage changes before an in-flight history upload publishes
+- **THEN** the old upload cannot publish into the replaced storage
+- **AND** its artifact and metadata remain covered by the existing cleanup rules
+- **AND** the current generation can acquire and publish the required history again
+
+#### Scenario: Acquisition or storage write fails
+
+- **WHEN** acquiring history or writing its artifact or metadata fails
+- **THEN** no successful history entry is published
+- **AND** a locally pending history notification remains available for a later attempt
+- **AND** cancellation stops the acquisition without an unbounded wait
+
+### Requirement: Every WAL session belongs to the configured cluster
+
+Before accepting WAL from a new source connection, Databasus SHALL compare the system identifier reported on that connection with the configured database's saved system identifier. The connection that supplies WAL SHALL be the connection whose identity was verified. This applies to initial reception, reception after a Databasus restart, and every reconnect, including any reconnect performed inside a receiver. Missing saved identity SHALL prevent reception rather than cause Databasus to learn an identity from the current address.
+
+An identity mismatch SHALL prevent foreign WAL from entering the configured database's local queue, backup storage or catalog. Matching credentials, slot names, timeline numbers, WAL positions or WAL filenames SHALL NOT substitute for identity verification. A failed identity check SHALL NOT update the saved identifier.
+
+#### Scenario: First reception reaches an unrelated cluster
+
+- **WHEN** the configured address accepts a replication connection to another cluster with working credentials, a matching timeline, overlapping WAL positions and the configured slot
+- **THEN** Databasus rejects reception because the system identifier differs
+- **AND** no WAL from that cluster enters the configured database's queue, storage or catalog
+
+#### Scenario: Running reception reconnects to another cluster
+
+- **WHEN** reception from the expected cluster loses its connection and a subsequent connection reaches an unrelated cluster with otherwise compatible replication settings
+- **THEN** the new connection is verified and refused before its WAL is accepted
+
+#### Scenario: Preliminary checks and WAL reception reach different clusters
+
+- **WHEN** preliminary SQL checks reach the expected cluster but a new WAL connection reaches an unrelated cluster
+- **THEN** the actual WAL connection is refused because of its system identifier
+- **AND** this applies both to initial reception and to a reconnect of an already running receiver
+
+#### Scenario: Saved identity is missing
+
+- **WHEN** a database configured for WAL reception has no saved system identifier
+- **THEN** Databasus refuses reception until the configuration has a valid saved identity
+- **AND** it does not accept the identity supplied by the current endpoint as a replacement
+
+### Requirement: WAL receiver setup has a bounded lifetime
+
+Each receiver attempt SHALL bound setup until the verified upstream session first enters replication. This bound SHALL include native receiver commands after local connection startup. A setup timeout SHALL stop the child, close the attempt's connections and release its private socket before retrying through normal supervision. The timeout SHALL NOT limit ongoing streaming after setup succeeds.
+
+#### Scenario: Native setup stalls after successful identity verification
+
+- **WHEN** the actual WAL session passes identity verification but the source stops answering a subsequent native setup command before entering replication
+- **THEN** the setup deadline ends the attempt with a retryable outcome without reporting streaming
+- **AND** the attempt releases its child, connections and private socket before another attempt starts
+- **AND** a later attempt can stream when the source responds again
+
+### Requirement: Identity refusal preserves the original recoverable archive
+
+Rejecting a foreign source SHALL leave the expected cluster's existing backups and legitimate completed queued WAL available. Queued segments SHALL either remain available for the existing upload mechanism or be archived normally; refusal SHALL NOT discard them to reset reception. An ordinary Databasus restart with completed queued WAL SHALL obey the same rule. Normal retention and explicit user deletion remain governed by their existing requirements.
+
+#### Scenario: Restart with original WAL queued and a foreign source
+
+- **WHEN** Databasus stops normally with completed WAL of cluster A still queued and starts with its saved address now reaching cluster B
+- **THEN** reception from B is refused
+- **AND** completed queued WAL of A remains available locally or through its normal archived representation
+- **AND** existing backups of A remain downloadable
+
+#### Scenario: Original copy remains recoverable after refusal
+
+- **WHEN** a foreign source has been refused and the expected source returns
+- **THEN** an existing valid recovery point from before the refusal can be downloaded and restored with the original cluster's data
+- **AND** retaining catalog rows alone does not establish successful recovery
+
+### Requirement: WAL reception resumes only against the saved identity
+
+While WAL streaming remains enabled, Databasus SHALL retry a refused source through its normal receiver supervision without changing the saved identifier. Once the expected source returns and a verified WAL session begins streaming, reception SHALL resume with the retained queue and existing resume rules. An identity refusal alone SHALL NOT request a slot rebuild or a replacement FULL. Existing backup-scheduler rules for an unresolved backup identity mismatch remain unchanged.
+
+#### Scenario: Wrong source remains behind the address
+
+- **WHEN** later receiver attempts still reach an unrelated cluster
+- **THEN** each attempt is refused without receiving foreign WAL or adopting its identity
+
+#### Scenario: Expected source returns
+
+- **WHEN** the address again reaches the configured cluster after an identity refusal
+- **THEN** a later supervised attempt verifies that cluster and resumes WAL reception without requiring the operator to change the saved identifier or erase the queue
+
+#### Scenario: Backups were independently paused by their identity check
+
+- **WHEN** reception has resumed against the expected cluster but automatic backups were paused by an unresolved backup identity mismatch
+- **THEN** WAL resumption does not clear that backup failure
+- **AND** automatic backups resume only after the existing successful operator-requested FULL recovery condition is met

@@ -25,6 +25,7 @@ export const metadata: Metadata = {
     description:
       "Databasus is built on pg_dump and extends its features with backups management, a web UI, automated scheduling, cloud storage, notifications, team collaboration and encryption.",
     type: "article",
+    locale: "en_US",
     url: "https://databasus.com/pgdump-alternative",
   },
   twitter: {
@@ -139,7 +140,7 @@ export default function PgDumpAlternativePage() {
                     <td>Storage destinations</td>
                     <td data-label="pg_dump">Local filesystem</td>
                     <td data-label="Databasus">
-                      Local, S3, Google Drive, R2, Azure, NAS, Dropbox
+                      Local, S3, R2, Azure, NAS, FTP
                     </td>
                   </tr>
                   <tr>
@@ -438,8 +439,7 @@ fi`}</code>
                   with unique keys per backup.
                 </li>
                 <li>
-                  <strong>Cloud upload</strong>: Direct upload to S3, Google
-                  Drive, Cloudflare R2, Azure or other destinations.
+                  <strong>Cloud upload</strong>: Direct upload to S3, Cloudflare R2, Azure or other destinations.
                 </li>
                 <li>
                   <strong>Retention policies</strong>: Automatic cleanup of old
@@ -467,11 +467,10 @@ fi`}</code>
               <ul>
                 <li>Local storage</li>
                 <li>Amazon S3 and S3-compatible services</li>
-                <li>Google Drive</li>
                 <li>Cloudflare R2</li>
                 <li>Azure Blob Storage</li>
                 <li>NAS (Network-attached storage)</li>
-                <li>Dropbox</li>
+                <li>FTP</li>
               </ul>
 
               <p>
@@ -746,8 +745,7 @@ fi`}</code>
                     scripts
                   </li>
                   <li>
-                    You need to store backups in cloud storage (S3, Google
-                    Drive, etc.)
+                    You need to store backups in cloud storage (S3, Azure Blob Storage, etc.)
                   </li>
                   <li>
                     You want built-in encryption without managing keys manually

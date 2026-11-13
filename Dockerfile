@@ -1,11 +1,15 @@
 # ========= BUILD FRONTEND =========
-FROM --platform=$BUILDPLATFORM node:24-alpine AS frontend-build
+FROM --platform=$BUILDPLATFORM docker.io/library/node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS frontend-build
 
 WORKDIR /frontend
 
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY tools/pnpm/package.json tools/pnpm/package-lock.json /opt/pnpm/
+RUN npm --prefix /opt/pnpm ci --ignore-scripts --no-audit --no-fund \
+    && node /opt/pnpm/node_modules/pnpm/install.js
+ENV PATH="/opt/pnpm/node_modules/.bin:${PATH}"
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 RUN --mount=type=cache,target=/pnpm/store \
-  corepack enable && pnpm install --frozen-lockfile --store-dir /pnpm/store
+  pnpm install --frozen-lockfile --ignore-scripts --store-dir /pnpm/store
 COPY frontend/ ./
 
 # APP_VERSION changes with every commit and invalidates the build cache of every
@@ -16,32 +20,10 @@ RUN pnpm build
 
 # ========= BUILD BACKEND =========
 # Backend build stage
-FROM --platform=$BUILDPLATFORM golang:1.26.3 AS backend-build
-
-# Make TARGET args available early so tools built here match the final image arch
-ARG TARGETOS
-ARG TARGETARCH
-ARG GOOSE_VERSION=v3.27.3
-
-# Install Go public tools needed in runtime. Use `go build` for goose so the
-# binary is compiled for the target architecture instead of downloading a
-# prebuilt binary which may have the wrong architecture (causes exec format
-# errors on ARM).
-RUN git clone --depth 1 --branch "$GOOSE_VERSION" https://github.com/pressly/goose.git /tmp/goose && \
-  cd /tmp/goose/cmd/goose && \
-  go get golang.org/x/crypto@v0.55.0 && \
-  GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
-  go build -ldflags "-X main.version=${GOOSE_VERSION}+databasus.1" \
-  -o /usr/local/bin/goose . && \
-  rm -rf /tmp/goose
-RUN go install github.com/swaggo/swag/cmd/swag@v1.16.4
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.27.4@sha256:5e8afd493a7124a8586e134d9b532731161d4b9becf9dee5a5956b107426f93d AS backend-build
 
 # Set working directory
 WORKDIR /app
-
-# Install Go dependencies
-COPY backend/go.mod backend/go.sum ./
-RUN go mod download
 
 # Create required directories for embedding
 RUN mkdir -p /app/ui/build
@@ -49,42 +31,45 @@ RUN mkdir -p /app/ui/build
 # Copy frontend build output for embedding
 COPY --from=frontend-build /frontend/dist /app/ui/build
 
-# Generate Swagger documentation
+# Copy the backend sources
 COPY backend/ ./
-RUN swag init -d . -g cmd/main.go -o swagger
+
+RUN --mount=type=cache,target=/go/pkg/mod go mod tidy -diff
 
 # Compile the backend
 ARG TARGETOS
 ARG TARGETARCH
 ARG TARGETVARIANT
 RUN --mount=type=cache,target=/root/.cache/go-build \
+  --mount=type=cache,target=/go/pkg/mod \
   CGO_ENABLED=0 \
   GOOS=$TARGETOS \
   GOARCH=$TARGETARCH \
-  go build -o /app/main ./cmd
+  go build -mod=readonly -o /app/main ./cmd/databasus
 
 
 # ========= BUILD VERIFICATION AGENT =========
-FROM --platform=$BUILDPLATFORM golang:1.26.3 AS verification-agent-build
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.27.4@sha256:5e8afd493a7124a8586e134d9b532731161d4b9becf9dee5a5956b107426f93d AS verification-agent-build
 
-WORKDIR /agent
+WORKDIR /app
 
-COPY agent/verification/go.mod agent/verification/go.sum ./
-RUN go mod download
+COPY backend/ ./
 
-COPY agent/verification/ ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod tidy -diff
 
 ARG APP_VERSION=dev
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -ldflags "-X main.Version=${APP_VERSION}" \
-    -o /verification-agent-binaries/databasus-verification-agent-linux-amd64 ./cmd
+    go build -mod=readonly -ldflags "-X main.Version=${APP_VERSION}" \
+    -o /verification-agent-binaries/databasus-verification-agent-linux-amd64 ./cmd/verification-agent
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
-    go build -ldflags "-X main.Version=${APP_VERSION}" \
-    -o /verification-agent-binaries/databasus-verification-agent-linux-arm64 ./cmd
+    go build -mod=readonly -ldflags "-X main.Version=${APP_VERSION}" \
+    -o /verification-agent-binaries/databasus-verification-agent-linux-arm64 ./cmd/verification-agent
 
 
 # ========= RUNTIME =========
@@ -94,7 +79,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 #   - Anything pulled in for a single build step is purged within the same layer.
 #   - We keep this tight because every extra binary widens the attack surface and
 #     adds another CVE to track.
-FROM debian:bookworm-slim
+FROM docker.io/library/debian:bookworm-slim@sha256:99c0b25c46d0214d5a2091092e7908907dcaecd6a962cde0ac700acee222b6f3
 
 ARG TARGETARCH
 ENV CONTAINER_ARCH=$TARGETARCH
@@ -115,6 +100,9 @@ ENV ENV_MODE=production
 #     the one the package creates at 17/main is never read. Dropped inside this RUN
 #     so its data files never reach a layer; the server binaries under
 #     /usr/lib/postgresql stay.
+#   - Standalone sysusers/tmpfiles: postgresql-common accepts them in place of full
+#     systemd, which would otherwise be pulled in and take GID 999 for systemd-journal
+#     before the databasus user below can claim it.
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
@@ -125,7 +113,8 @@ RUN set -eux; \
     echo "deb [signed-by=/usr/share/keyrings/pgdg.asc] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
       > /etc/apt/sources.list.d/pgdg.list; \
     apt-get update; \
-    apt-get install -y --no-install-recommends postgresql-17; \
+    apt-get install -y --no-install-recommends postgresql-17 \
+      systemd-standalone-sysusers systemd-standalone-tmpfiles; \
     pg_dropcluster --stop 17 main; \
     apt-get purge -y --auto-remove wget; \
     rm -rf /var/lib/apt/lists/*
@@ -159,17 +148,11 @@ RUN set -eux; \
 
 WORKDIR /app
 
-# Copy Goose from build stage
-COPY --from=backend-build /usr/local/bin/goose /usr/local/bin/goose
-
 # Copy app binary
 COPY --from=backend-build /app/main .
 
 # Expose the binary as the `databasus` command on PATH (e.g. `databasus healthcheck`)
 RUN ln -s /app/main /usr/local/bin/databasus
-
-# Copy migrations directory
-COPY backend/migrations ./migrations
 
 # Copy UI files
 COPY --from=backend-build /app/ui/build ./ui/build

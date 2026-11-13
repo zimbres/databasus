@@ -41,17 +41,28 @@ MongoDB clients are numbered independently of server release lines, so the relea
 
 ### Requirement: Shipped clients stay on a maintained release line
 
-The system SHALL ship clients from a release line that the vendor still patches, or, when the line has reached its end of life, from the final patch that line received.
+The system SHALL ship clients from a release line that the vendor still patches, or, when the line has reached its end of life, target the final patch that line received. By default, a client refresh SHALL select the newest patch of its designated release line that has completed the fourteen-day waiting period at update selection. A newly published patch within that period SHALL NOT force an immediate refresh. The updater SHALL review official release information and report deferred patches; an offline dependency check SHALL NOT claim to establish publication age. Missing age information or a departure from the normal waiting period SHALL be reported with its reason under the dependency upgrade procedure.
 
 #### Scenario: A line the vendor still patches
 
-- **WHEN** a client is shipped for a line the vendor still supports
-- **THEN** it is the newest patch released for that line at the time the change ships
+- **WHEN** a client refresh is selected for a line the vendor still supports
+- **THEN** the updater selects the newest eligible patch for that line and records the source used for release-age review
 
 #### Scenario: A line that has ended
 
-- **WHEN** a client is shipped for a line whose upstream support has ended, because servers on that line are still in use
-- **THEN** it is the last patch that line received
+- **WHEN** a client refresh targets an end-of-life line whose final patch has completed the waiting period
+- **THEN** it selects that final patch and reports the line's end-of-life status
+
+#### Scenario: The newest patch is still waiting
+
+- **WHEN** the newest patch has not completed fourteen days and an earlier eligible patch exists
+- **THEN** the refresh selects the earlier eligible patch and reports the deferred release and its eligibility date
+
+#### Scenario: No patch has completed the waiting period
+
+- **WHEN** no patch in the designated line has completed the normal waiting period
+- **THEN** the updater reports the deferral or explicitly explains a departure from the normal period
+- **AND** it does not silently substitute another release line
 
 ### Requirement: A client that cannot run is reported at startup
 
@@ -113,3 +124,37 @@ The system SHALL ship MongoDB client tools that are byte-identical to the progra
 
 - **WHEN** the version embedded in the shipped MongoDB dump and restore programs is read for each supported architecture
 - **THEN** every program carries the tools release the client documentation records
+
+### Requirement: Building the image downloads no client tools
+
+The client tools SHALL be committed to the repository and copied into the image. Building the image SHALL NOT download client tools from engine vendors' package repositories, so a vendor mirror that is down or has changed its keys cannot break or alter a build.
+
+#### Scenario: Vendor repository is down
+
+- **WHEN** a vendor's package repository is unreachable during an image build
+- **THEN** the build completes with the same client tools as before
+
+### Requirement: A broken PostgreSQL client stops the server before the schema changes
+
+The server SHALL run the startup check of its client sets before it touches the internal database. When a PostgreSQL client is missing or unusable, or the client tools cannot be found, the server SHALL report the failure and exit without opening the internal database, so the schema stays at the version the previous image can run. A broken client of another engine SHALL still only warn, and the server SHALL go on to migrate. This check SHALL run before the refusal of a schema newer than the binary's, so a server that fails both reports the client failure. A console command runs no client and SHALL NOT be stopped by this check.
+
+#### Scenario: An image with a broken PostgreSQL client replaces a working one
+
+- **WHEN** the server starts from a new image whose PostgreSQL client cannot run, on an internal database with an older schema
+- **THEN** the server reports the failure and exits
+- **AND** no migration is applied, so the previous image can start on that database again
+
+#### Scenario: The client tools cannot be found
+
+- **WHEN** the server starts where the client tools cannot be found
+- **THEN** the server reports the failure and exits, and no migration is applied
+
+#### Scenario: A MySQL client is broken
+
+- **WHEN** the server starts with a working PostgreSQL client and a MySQL client that cannot run
+- **THEN** it logs a warning naming the client set, applies its migrations and starts
+
+#### Scenario: A console command on a host without client tools
+
+- **WHEN** an operator runs a console command where the client tools cannot be found
+- **THEN** the command runs as usual

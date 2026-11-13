@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import LandingFooterComponent from "@/app/components/LandingFooterComponent";
 import LandingHeaderComponent from "@/app/components/LandingHeaderComponent";
-import { OG_LOCALES, getLanguageAlternates, getLocalizedUrl } from "@/app/i18n";
+import { OG_LOCALES, getLanguageAlternates, getLocalizedUrl, getLocalizedHref } from "@/app/i18n";
 import HeroStatsComponent from "@/app/components/HeroStatsComponent";
 import InstallationComponent from "@/app/components/InstallationComponent";
 import LiteYouTubeEmbed from "@/app/components/LiteYouTubeEmbed";
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description:
     "免费开源的 PostgreSQL 定时备份工具（同时支持 MySQL 和 MongoDB）。备份可保存到本地和云端。支持 Slack、Discord、Telegram、邮件、webhook 等多种通知方式。",
   keywords:
-    "PostgreSQL、备份、监控、数据库、定时备份、Docker、自托管、开源、S3、Google Drive、Slack 通知、Discord、DevOps、数据库监控、pg_dump、数据库恢复、加密、AES-256、备份加密",
+    "PostgreSQL、备份、监控、数据库、定时备份、Docker、自托管、开源、S3、Azure Blob Storage、Slack 通知、Discord、DevOps、数据库监控、pg_dump、数据库恢复、加密、AES-256、备份加密",
   robots: "index, follow",
   alternates: {
     canonical: getLocalizedUrl("zh", ""),
@@ -82,7 +82,7 @@ export default function Index() {
             },
             featureList: [
               "PostgreSQL 定时备份",
-              "多种存储目标（S3、Google Drive、Dropbox、SFTP、rclone 等）",
+              "多种存储目标（S3、Azure Blob Storage、FTP、SFTP、NAS 等）",
               "实时通知（Slack、Telegram、Discord、Webhook、邮件等）",
               "数据库健康监控",
               "通过 Docker 自托管部署",
@@ -139,7 +139,7 @@ export default function Index() {
                 name: "Databasus 是什么？为什么应该用它而不是自己写脚本？",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Databasus 是一个采用 Apache 2.0 许可证的自托管服务，用于备份 PostgreSQL v13 到 v18。它与 shell 脚本的区别在于：它提供了前端界面，可以调度任务、压缩归档并存储到多个目标（本地磁盘、S3、Google Drive、Dropbox、SFTP、rclone 等）、配置保留策略来自动清理旧备份，并在任务完成或失败时通知你的团队，这一切都无需手写代码",
+                  text: "Databasus 是一个采用 Apache 2.0 许可证的自托管服务，用于备份 PostgreSQL v13 到 v18。它与 shell 脚本的区别在于：它提供了前端界面，可以调度任务、压缩归档并存储到多个目标（本地磁盘、S3、Azure Blob Storage、FTP、SFTP、NAS 等）、配置保留策略来自动清理旧备份，并在任务完成或失败时通知你的团队，这一切都无需手写代码",
                 },
               },
               {
@@ -163,7 +163,7 @@ export default function Index() {
                 name: "我的备份存放在哪里？会占用多少空间？",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "归档可以保存到本地卷、S3 兼容存储桶、Google Drive、Dropbox 和其他云端目标。Databasus 采用均衡压缩，通常能把转储文件缩小 4-8 倍，而运行时开销只增加约 20%，从而节省存储和带宽。",
+                  text: "归档可以保存到本地卷、S3 兼容存储桶、Azure Blob Storage、FTP 和其他云端目标。Databasus 采用均衡压缩，通常能把转储文件缩小 4-8 倍，而运行时开销只增加约 20%，从而节省存储和带宽。",
                 },
               },
               {
@@ -179,7 +179,7 @@ export default function Index() {
                 name: "Databasus 如何保证安全性？",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Databasus 从三个层面保障安全：（1）敏感数据加密——所有密码、令牌和凭据均使用 AES-256-GCM 加密，并与数据库分开存储；（2）备份加密——每个备份文件都使用由主密钥、备份 ID 和随机盐派生出的唯一密钥加密，即使有人获得了存储的访问权限，没有你的加密密钥备份也毫无用处；（3）只读数据库访问——Databasus 只需要 SELECT 权限，并会做全面检查确保不存在任何写权限，即使工具本身被攻破也不会破坏数据。登录本身也可以要求第二重验证：启用后，密码正确之后账号邮箱会收到六位验证码，而通过 Google 或 GitHub 登录仍然依赖这些服务商自己的验证。在运行时之外，安全性和可靠性也被落实到每一次提交和 PR：CodeQL 静态分析、gitleaks 密钥扫描、semgrep 安全规则检查、Dependabot CVE 监控、Trivy 镜像与 Dockerfile 扫描，以及 OpenAI 定期进行的 Codex Security 审计。集成测试针对真实的 PostgreSQL、MySQL、MariaDB 和 MongoDB 容器运行，并在每个 PR 上验证完整的备份加恢复流程。GitHub Actions 固定到提交 SHA，工作流遵循最小权限原则。所有操作都在你控制的容器和你拥有的服务器上运行，而且因为它是开源的，你的安全团队可以在部署前审计每一行代码。",
+                  text: "Databasus 从三个层面保障安全：（1）敏感数据加密——所有密码、令牌和凭据均使用 AES-256-GCM 加密，并与数据库分开存储；（2）备份加密——每个备份文件都使用由主密钥、备份 ID 和随机盐派生出的唯一密钥加密，即使有人获得了存储的访问权限，没有你的加密密钥备份也毫无用处；（3）只读数据库访问——Databasus 只需要 SELECT 权限，并会做全面检查确保不存在任何写权限，即使工具本身被攻破也不会破坏数据。登录本身也可以要求第二重验证：启用后，密码正确之后账号邮箱会收到六位验证码，而通过 Google 或 GitHub 登录仍然依赖这些服务商自己的验证。每次发布前，自动检查都会扫描代码、依赖、密钥等敏感信息和容器镜像。测试在真实的 PostgreSQL、MySQL、MariaDB 和 MongoDB 容器中验证完整的备份与恢复流程。发布前必须通过所有必需检查。OpenAI 的 Codex Security 定期审计作为补充，与发布流程分开进行。 所有操作都在你控制的容器和你拥有的服务器上运行，而且因为它是开源的，你的安全团队可以在部署前审计每一行代码。",
                 },
               },
               {
@@ -230,6 +230,14 @@ export default function Index() {
                   text: '实例上创建的第一个账户就是它的管理员。如果你不记得那个地址，可以在运行 Databasus 的服务器上执行 docker exec -it databasus ./main --list-admins：它会列出每个管理员账户的邮箱、显示名称、创建日期和活动状态，并且不会输出任何密码。要为该账户设置新密码，请执行 docker exec -it databasus ./main --new-password="YourNewSecurePassword123" --email="owner@example.com"。在第一个账户成为管理员之前创建的实例，在其所有者替换之前仍使用占位地址 admin。如果实例还要求登录验证码，而邮件服务器已经无法送达，请执行 docker exec -it databasus ./main --disable-2fa，让实例不再要求验证码。这三条命令都记录在密码页面上。',
                 },
               },
+              {
+                "@type": "Question",
+                name: "Databasus 开发中如何使用 AI？",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "我们在明确的工程规范下使用 AI 开发 Databasus。开发者确定方向并做出最终决定。 合并变更前，开发者会逐行阅读代码。 独立代理在各自的只读会话中审查正确性、架构、测试和文档。严格的静态检查和真实数据库测试与这些审查配合进行。发布前必须通过所有必需的 CI 检查。",
+                },
+              },
             ],
           }),
         }}
@@ -257,12 +265,12 @@ export default function Index() {
             </div>
 
             <h1 className="text-2xl sm:text-4xl sm:max-w-[300px] md:text-4xl leading-tight font-bold mb-4 md:mb-6 mx-auto md:max-w-[650px]">
-              PostgreSQL 备份工具，支持时间点恢复与恢复验证
+              PostgreSQL 备份工具
             </h1>
 
             <p className="text-sm sm:text-lg text-gray-200 max-w-[720px] mx-auto mb-6 md:mb-10 px-2">
               Databasus 是一款免费、开源、可自托管的 PostgreSQL
-              备份工具。支持多种存储（S3、Google Drive、FTP
+              备份工具。支持多种存储（S3、Azure Blob Storage、FTP
               等）并可将进度通知发送到 Slack、Discord、Telegram 等渠道。专注于{" "}
               <span className="underline decoration-2 underline-offset-2 decoration-blue-600">
                 低 RPO/RTO
@@ -1039,7 +1047,7 @@ export default function Index() {
 
                 <div className="space-y-3 max-w-[370px] text-gray-400 text-sm md:text-base">
                   <p>
-                    备份文件可以保存在本地、S3、Google Drive、NAS、Dropbox
+                    备份文件可以保存在本地、S3、Azure Blob Storage、NAS、FTP
                     等服务中
                   </p>
                   <p>请注意，存储位置需要有足够的空间</p>
@@ -1161,7 +1169,7 @@ export default function Index() {
             <FaqItem
               number="1"
               question="Databasus 是什么？为什么应该用它而不是自己写脚本？"
-              answer="Databasus 是一个采用 Apache 2.0 许可证的自托管数据库备份服务。它与 shell 脚本的区别在于：它提供了前端界面，可以调度任务、压缩归档并存储到多个目标（本地磁盘、S3、Google Drive、NAS、Dropbox、SFTP、rclone 等）、配置保留策略来自动清理旧备份，并在任务完成或失败时通知你的团队，这一切都无需手写代码"
+              answer="Databasus 是一个采用 Apache 2.0 许可证的自托管数据库备份服务。它与 shell 脚本的区别在于：它提供了前端界面，可以调度任务、压缩归档并存储到多个目标（本地磁盘、S3、Azure Blob Storage、NAS、FTP、SFTP 等）、配置保留策略来自动清理旧备份，并在任务完成或失败时通知你的团队，这一切都无需手写代码"
             />
             <FaqItem
               number="2"
@@ -1192,18 +1200,13 @@ export default function Index() {
                   Google 或 GitHub 登录仍然依赖这些服务商自己的验证。
                   <br />
                   <br />
-                  在运行时之外，安全性和可靠性也被落实到每一次提交和 PR：CodeQL
-                  静态分析、gitleaks 密钥扫描、semgrep 安全规则检查、Dependabot
-                  CVE 监控、Trivy 镜像与 Dockerfile 扫描，以及 OpenAI 定期进行的
-                  Codex Security 审计。集成测试针对真实的
-                  PostgreSQL、MySQL、MariaDB 和 MongoDB 容器运行，并在每个 PR
-                  上验证完整的备份加恢复流程。GitHub Actions 固定到提交
-                  SHA，工作流遵循最小权限原则。
+                  每次发布前，自动检查都会扫描代码、依赖、密钥等敏感信息和容器镜像。测试在真实的 PostgreSQL、MySQL、MariaDB 和 MongoDB
+                  容器中验证完整的备份与恢复流程。发布前必须通过所有必需检查。OpenAI 的 Codex Security 定期审计作为补充，与发布流程分开进行。
                   <br />
                   <br />
                   完整流程请参阅{" "}
                   <a
-                    href="/zh/security#security-and-reliability-engineering"
+                    href={`${getLocalizedHref("zh", "security")}#security-and-reliability-engineering`}
                     className="text-blue-400 hover:text-blue-600"
                   >
                     安全与可靠性工程
@@ -1235,8 +1238,8 @@ export default function Index() {
                   <br />
                   <br />
                   接着填写 PostgreSQL 的主机、端口号、数据库名称、凭据和 SSL
-                  选项，并选择归档的存放位置（本地路径、S3 存储桶、Google Drive
-                  文件夹、Dropbox 等）。 <br />
+                  选项，并选择归档的存放位置（本地路径、S3 存储桶、Azure Blob Storage、
+                  FTP 等）。 <br />
                   <br />
                   如有需要，可添加邮件、Slack、Telegram 或 webhook
                   等通知渠道，然后点击 Save。Databasus
@@ -1421,6 +1424,29 @@ export default function Index() {
             />
             <FaqItem
               number="12"
+              question="Databasus 开发中如何使用 AI？"
+              answer={
+                <>
+                  <p>
+                    我们在明确的工程规范下使用 AI 开发 Databasus。开发者确定方向并做出最终决定。{" "}
+                    <strong>合并变更前，开发者会逐行阅读代码。</strong>
+                  </p>
+                  <p className="mt-3">
+                    独立代理在各自的只读会话中审查正确性、架构、测试和文档。严格的静态检查和真实数据库测试与这些审查配合进行。发布前必须通过所有必需的
+                    CI 检查。{" "}
+                    <a
+                      href={`${getLocalizedHref("zh", "faq")}#ai-usage`}
+                      className="text-blue-400 hover:text-blue-600"
+                    >
+                      了解完整开发流程
+                    </a>
+                    .
+                  </p>
+                </>
+              }
+            />
+            <FaqItem
+              number="13"
               question="如何加入 Databasus 社区？"
               answer={
                 <>
@@ -1439,7 +1465,7 @@ export default function Index() {
               }
             />
             <FaqItem
-              number="13"
+              number="14"
               question="Databasus 的普及程度如何？"
               answer={
                 <>
@@ -1467,7 +1493,7 @@ export default function Index() {
               }
             />
             <FaqItem
-              number="14"
+              number="15"
               question="我忘记了管理员邮箱或密码"
               answer={
                 <>

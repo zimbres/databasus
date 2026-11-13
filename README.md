@@ -2,7 +2,7 @@
   <img src="assets/logo.svg" alt="Databasus Logo" width="250"/>
 
   <h3>PostgreSQL backup tool</h3>
-  <p>Databasus is a free, open source and self-hosted tool to backup PostgreSQL. Make backups with different storages (S3, Google Drive, FTP, etc.) and notifications about progress (Slack, Discord, Telegram, etc.). With a focus on Point-in-Time Recovery at low RPO/RTO</p>
+  <p>Databasus is a free, open source and self-hosted tool to backup PostgreSQL. Make backups with different storages (S3, Azure Blob Storage, FTP, etc.) and notifications about progress (Slack, Discord, Telegram, etc.). With a focus on Point-in-Time Recovery at low RPO/RTO</p>
   
   <!-- Badges -->
    [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -22,15 +22,15 @@
     <a href="assets/readme/README.es.md">Español</a> •
     <a href="assets/readme/README.pt.md">Português</a> •
     <a href="assets/readme/README.zh.md">中文</a> •
-    <a href="assets/readme/README.fr.md">Français</a>
+    <a href="assets/readme/README.fr.md">Français</a> •
+    <a href="assets/readme/README.id.md">Bahasa Indonesia</a>
   </p>
 
   <p>
     <a href="#-features">Features</a> •
     <a href="#-installation">Installation</a> •
     <a href="#-usage">Usage</a> •
-    <a href="#-license">License</a> •
-    <a href="#-contributing">Contributing</a>
+    <a href="#-license">License</a>
   </p>
 
   <p style="margin-top: 20px; margin-bottom: 20px; font-size: 1.2em;">
@@ -79,7 +79,7 @@ Databasus performs a real restore to confirm backups are usable, not just intact
 ### 🗄️ **Multiple storage destinations** <a href="https://databasus.com/storages">(view supported)</a>
 
 - **Local storage**: Keep backups on your VPS/server
-- **Cloud storage**: S3, Cloudflare R2, Google Drive, NAS, Dropbox, SFTP, Rclone and more
+- **Cloud storage**: S3, Cloudflare R2, Azure Blob Storage, NAS, FTP, SFTP and more
 - **Secure**: All data stays under your control
 
 ### 📱 **Notifications** <a href="https://databasus.com/notifiers">(view supported)</a>
@@ -254,7 +254,7 @@ For more options (NodePort, TLS, HTTPRoute for Gateway API), see the [Helm chart
 2. **Add your first database for backup**: Click "New Database" and follow the setup wizard
 3. **Configure schedule**: Choose from hourly, daily, weekly, monthly or cron intervals
 4. **Set database connection**: Enter your database credentials and connection details
-5. **Choose storage**: Select where to store your backups (local, S3, Google Drive, etc.)
+5. **Choose storage**: Select where to store your backups (local, S3, Azure Blob Storage, etc.)
 6. **Configure retention policy**: Choose time period, count or GFS to control how long backups are kept
 7. **Add notifications** (optional): Configure email, Telegram, Slack, Mattermost or webhook notifications
 8. **Save and start**: Databasus will validate settings and begin the backup schedule
@@ -293,17 +293,15 @@ After installation, it is also recommended to <a href="https://databasus.com/faq
 
 ## 🛡️ Security & reliability engineering
 
-Databasus works with sensitive data, so preventing vulnerabilities, unauthorised access and data leaks is a primary concern. We invest in this on both sides of the system: in the code itself (permission checks, encryption, careful handling of secrets) and in the infrastructure around it (dependency analysis, CVE response, DevSecOps best practices). The pipeline below runs automatically on every commit and PR. No single layer is enough on its own, but together they reduce the chance of vulnerable code, unsafe dependencies, broken images, or non-restorable backups reaching a release.
+See the [full security and reliability process](https://databasus.com/security/#security-and-reliability-engineering).
 
-For static analysis we combine several independent passes. CodeQL scans the full codebase for security issues. On every PR, gitleaks scans for leaked secrets and semgrep checks the code against security rules. Dockerfiles and CI workflows get extra rules of their own (pinned action references, least-privilege permissions, suspicious base images), so insecure patterns are flagged before they ever merge. On top of these per-PR checks, Codex Security from OpenAI runs regular, deeper audits of the whole codebase. It's a separate program that catches architectural and cross-cutting issues narrow PR-time scans can miss.
+Before each release, Databasus runs automated checks to reduce the risk of vulnerabilities, data leaks and backups that cannot be restored:
 
-On the dependency side, Dependabot watches all of our dependencies against the GitHub Advisory Database and surfaces CVEs within minutes of publication. Updates run through a cooldown so newly-published versions get a chance to mature before we adopt them. This is a deliberate defence against compromised-package incidents like supply-chain attack. The Dependency Review Action blocks any PR that introduces a new HIGH or CRITICAL CVE outright.
+- **Security scans** check code, dependencies and container images for known vulnerabilities and look for leaked secrets.
+- **Restore tests** run full backup-and-restore cycles against real database containers for every supported engine and major version.
+- **Release gates** require tests, builds and security checks to pass. Open critical CodeQL findings in the release analysis block publication.
 
-Container images are scanned with Trivy on every build. A separate Trivy pass on the Dockerfile catches misconfigurations before they make it into an image. All GitHub Actions are pinned to full commit SHAs rather than floating tags like `@v4` or `@main`, which have been an active attack vector in 2025. Workflows default to least-privilege permissions and only elevate per-job when genuinely needed.
-
-Critical paths are covered by both unit and integration tests, run against real database containers for every supported engine and major version. Restore is the path that matters most for a backup tool, so we test it explicitly: every PR runs full backup-then-restore cycles against those same real containers, verifying that backups can actually be restored end-to-end, not just written successfully. The rest of the CI/CD pipeline runs lint, type-check, the full test suite, image smoke tests and multi-architecture builds on every PR. A release only ships if all of it passes.
-
-Found a vulnerability? Report it via the GitHub Security tab. See [SECURITY.md](https://github.com/databasus/databasus?tab=security-ov-file#readme). Security reports are the highest-priority work queue. For runtime application security (AES-256-GCM at rest, zero-trust storage, encrypted secrets, read-only DB user by default) see [Enterprise-grade security](#-enterprise-grade-security-docs) in the Features section above.
+Regular Codex Security audits from OpenAI complement these release checks. Report vulnerabilities privately using [SECURITY.md](https://github.com/databasus/databasus?tab=security-ov-file#readme); security reports take priority.
 
 ---
 
@@ -311,8 +309,6 @@ Found a vulnerability? Report it via the GitHub Security tab. See [SECURITY.md](
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details
 
-## 🤝 Contributing
+## 💬 Community
 
-Contributions are welcome! Read the <a href="https://databasus.com/contribute">contributing guide</a> for more details, priorities and rules. If you want to contribute but don't know where to start, message me on Telegram [@rostislav_dugin](https://t.me/rostislav_dugin)
-
-Also you can join our large community of developers, DBAs and DevOps engineers on Telegram [@databasus_community](https://t.me/databasus_community).
+Join our large community of developers, DBAs and DevOps engineers on Telegram [@databasus_community](https://t.me/databasus_community).

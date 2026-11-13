@@ -11,25 +11,22 @@ import DocTableOfContentComponent from "@/app/components/DocTableOfContentCompon
 export const metadata: Metadata = {
   title: "Almacenamientos - Documentación de Databasus",
   description:
-    "Lista de destinos de almacenamiento compatibles con las copias de seguridad de Databasus: almacenamiento local, S3, Cloudflare R2, Google Drive, Azure Blob Storage, NAS, FTP, SFTP, rclone y Dropbox.",
+    "Lista de destinos de almacenamiento compatibles con las copias de seguridad de Databasus: almacenamiento local, S3, Cloudflare R2, Azure Blob Storage, NAS, FTP, SFTP.",
   keywords: [
     "almacenamientos Databasus",
     "almacenamiento de copias de seguridad",
     "almacenamiento S3",
-    "copia de seguridad en Google Drive",
     "Cloudflare R2",
     "copia de seguridad en NAS",
-    "copia de seguridad en Dropbox",
     "almacenamiento local",
     "Azure Blob Storage",
     "copia de seguridad por FTP",
     "copia de seguridad por SFTP",
-    "copia de seguridad con rclone",
   ],
   openGraph: {
     title: "Almacenamientos - Documentación de Databasus",
     description:
-      "Lista de destinos de almacenamiento compatibles con las copias de seguridad de Databasus: almacenamiento local, S3, Cloudflare R2, Google Drive, Azure Blob Storage, NAS, FTP, SFTP, rclone y Dropbox.",
+      "Lista de destinos de almacenamiento compatibles con las copias de seguridad de Databasus: almacenamiento local, S3, Cloudflare R2, Azure Blob Storage, NAS, FTP, SFTP.",
     type: "article",
     url: getLocalizedUrl("es", "storages"),
     locale: OG_LOCALES.es,
@@ -38,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Almacenamientos - Documentación de Databasus",
     description:
-      "Lista de destinos de almacenamiento compatibles con las copias de seguridad de Databasus: almacenamiento local, S3, Cloudflare R2, Google Drive, Azure Blob Storage, NAS, FTP, SFTP, rclone y Dropbox.",
+      "Lista de destinos de almacenamiento compatibles con las copias de seguridad de Databasus: almacenamiento local, S3, Cloudflare R2, Azure Blob Storage, NAS, FTP, SFTP.",
   },
   alternates: {
     canonical: getLocalizedUrl("es", "storages"),
@@ -59,7 +56,7 @@ export default function StoragesPage() {
             "@type": "TechArticle",
             headline: "Almacenamientos - Documentación de Databasus",
             description:
-              "Lista de destinos de almacenamiento compatibles con las copias de seguridad de Databasus: almacenamiento local, S3, Cloudflare R2, Google Drive, Azure Blob Storage, NAS, FTP, SFTP, rclone y Dropbox.",
+              "Lista de destinos de almacenamiento compatibles con las copias de seguridad de Databasus: almacenamiento local, S3, Cloudflare R2, Azure Blob Storage, NAS, FTP, SFTP.",
             author: {
               "@type": "Organization",
               name: "Databasus",
@@ -115,15 +112,6 @@ export default function StoragesPage() {
                   - Almacenamiento de objetos de Cloudflare compatible con S3
                 </li>
                 <li>
-                  <a
-                    href="/es/storages/google-drive"
-                    className="font-semibold! text-blue-600 hover:text-blue-800"
-                  >
-                    Google Drive
-                  </a>{" "}
-                  - Almacenamiento en la nube de Google
-                </li>
-                <li>
                   <strong>Azure Blob Storage</strong> - Almacenamiento en la
                   nube de Microsoft Azure
                 </li>
@@ -138,10 +126,6 @@ export default function StoragesPage() {
                 <li>
                   <strong>SFTP</strong> - Servidores de transferencia de
                   archivos sobre SSH
-                </li>
-                <li>
-                  <strong>rclone</strong> - Conecte con más de 70 proveedores de
-                  almacenamiento en la nube mediante rclone
                 </li>
               </ul>
             </article>

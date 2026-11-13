@@ -1,0 +1,12 @@
+package: httpapi
+output: api.gen.go
+generate:
+  models: true
+  gin-server: true
+  strict-server: true
+output-options:
+  user-templates:
+    strict/strict-gin.tmpl: ../../../../../api/templates/strict-gin.tmpl
+  include-tags: [workspaces]
+compatibility:
+  always-prefix-enum-values: true

@@ -1,27 +1,37 @@
-import type { en } from './en';
+import type { en } from '@/shared/i18n/locales/en';
 
 export const fr: typeof en = {
   language: {
     nativeName: 'Français',
   },
   common: {
+    calendar: {
+      monthLevelControl: 'Choisir le mois',
+      yearLevelControl: 'Choisir l’année',
+      nextMonth: 'Mois suivant',
+      previousMonth: 'Mois précédent',
+      nextYear: 'Année suivante',
+      previousYear: 'Année précédente',
+      nextDecade: 'Décennie suivante',
+      previousDecade: 'Décennie précédente',
+      seconds: 'Secondes',
+    },
     actions: {
-      add: 'Ajouter',
+      clear: 'Effacer',
+      togglePasswordVisibility: 'Afficher ou masquer le mot de passe',
       back: 'Retour',
       cancel: 'Annuler',
       close: 'Fermer',
-      confirm: 'Confirmer',
       continue: 'Continuer',
       copy: 'Copier',
       create: 'Créer',
       delete: 'Supprimer',
-      download: 'Télécharger',
       edit: 'Modifier',
       ok: 'OK',
-      refresh: 'Actualiser',
       remove: 'Supprimer',
       retry: 'Réessayer',
       save: 'Enregistrer',
+      transfer: 'Transférer',
     },
     answers: {
       no: 'Non',
@@ -37,15 +47,16 @@ export const fr: typeof en = {
       username: "Nom d'utilisateur",
     },
     states: {
-      disabled: 'Désactivé',
       enabled: 'Activé',
       loading: 'Chargement...',
     },
     messages: {
       copiedToClipboard: 'Copié dans le presse-papiers',
+      addressChangedEnterSecretAgain: "L'adresse a changé. Saisissez de nouveau cette valeur.",
     },
     // Joins translated words into one list (Chinese uses 、)
     listSeparator: ', ',
+    websiteLink: 'Site web de Databasus',
     confirmation: {
       title: 'Confirmation',
     },
@@ -62,6 +73,7 @@ export const fr: typeof en = {
       system: 'Système',
     },
     navigation: {
+      menu: 'Menu de navigation',
       databases: 'Bases de données',
       storages: 'Stockages',
       notifiers: 'Canaux de notification',
@@ -77,16 +89,11 @@ export const fr: typeof en = {
     diskUsage: {
       title: 'Espace disque',
       hint: "Pour créer des sauvegardes en local et les restaurer, il faut assez d'espace sur le disque. Une restauration demande autant d'espace libre que la taille de la sauvegarde.",
-      compactSummary: '{{used}} sur {{total}} GB<lineBreak/>utilisés ({{percent}} %)',
       summary: '{{used}} sur {{total}} GB utilisés ({{percent}} %)',
     },
     workspaceSelection: {
-      createShort: 'Créer',
       create: 'Créer un espace de travail',
       selected: 'Espace de travail',
-      placeholder: 'Choisissez un espace de travail',
-      search: 'Rechercher un espace de travail...',
-      notFound: 'Aucun espace de travail trouvé',
       createNew: '+ Nouvel espace de travail',
     },
     starButton: {
@@ -100,30 +107,34 @@ export const fr: typeof en = {
         "L'accès automatique au presse-papiers n'est pas disponible. Collez votre contenu ci-dessous.",
       placeholder: 'Collez votre chaîne de connexion ici...',
     },
-    auth: {
-      accountsCheckFailed: "Impossible de vérifier si l'instance possède un compte : {{error}}",
-    },
     oauthCallback: {
       failedTitle: "Échec de l'authentification",
-      codeNotFound: "Code d'autorisation introuvable",
-      stateMissing: 'Paramètre state OAuth manquant',
-      invalidProvider: 'Fournisseur OAuth non valide',
+      notCompleted: "La connexion n'a pas abouti. Recommencez.",
       returnToSignIn: 'Retour à la connexion',
       completing: "Finalisation de l'authentification...",
     },
-    oauthStorage: {
-      configNotFound: 'Configuration du stockage Google Drive introuvable',
-      exchangeFailed: "Impossible d'échanger le code OAuth",
-      unsupportedType: 'Ce type de stockage ne prend pas en charge OAuth',
-      invalidState: 'Paramètre state OAuth non valide',
-      paramNotFound:
-        "Paramètre OAuth introuvable. Vérifiez que l'URL de redirection est correctement configurée.",
-      addStorageTitle: 'Ajouter un stockage',
-      storageDescription:
-        "Un stockage est l'endroit où les sauvegardes sont conservées (disque local, S3, etc.)",
-    },
   },
   errors: {
+    cleanupPending:
+      'Le nettoyage des fichiers est toujours en cours. Attendez sa fin ou supprimez les stockages concernés un par un, en confirmant que les fichiers restants devront être supprimés manuellement.',
+    alreadyMember: "Cet utilisateur est déjà membre de l'espace de travail.",
+    cannotChangeOwnRole: "Vous ne pouvez pas modifier votre propre rôle dans l'espace de travail.",
+    ownerRequiresTransfer:
+      "Le propriétaire ne peut être ni modifié ni retiré. Transférez d'abord la propriété à un autre membre.",
+    workspaceNotEmpty:
+      "L'espace de travail contient encore des bases de données. Supprimez-les d'abord, puis supprimez l'espace de travail.",
+    databaseConnectionFailed: 'Impossible de se connecter à la base de données : {{detail}}',
+    inUse:
+      "Il est encore utilisé par une base de données ou par une sauvegarde ou une restauration en cours. Réessayez quand plus rien ne l'utilise.",
+    backupNotCompleted: 'Seule une sauvegarde terminée peut être vérifiée.',
+    alreadyRunning: "C'est déjà en cours. Attendez la fin et réessayez.",
+    noExtendableChain: 'Effectuez un backup complet avant de lancer un backup incrémental.',
+    noRestorableBackup: 'Aucun backup terminé ne peut être restauré.',
+    targetTimeUnreachable:
+      'Les backups et le WAL disponibles ne permettent pas de restaurer à l’instant demandé.',
+    notRunning: "Ce n'est plus en cours : il n'y a rien à annuler.",
+    instanceUnhealthy: 'L’instance présente des problèmes.',
+    insufficientDiskSpace: "Le serveur Databasus n'a pas assez d'espace disque libre : {{detail}}",
     unknown: "Une erreur s'est produite. Réessayez.",
     networkUnreachable:
       'Impossible de joindre le serveur Databasus. Vérifiez votre connexion et réessayez.',
@@ -137,17 +148,43 @@ export const fr: typeof en = {
       'Trop de codes de connexion ont été demandés pour ce compte au cours de la dernière heure. Réessayez plus tard.',
     signInCodeResentTooSoon:
       "Un code a été envoyé il y a moins d'une minute. Attendez une minute avant d'en demander un autre.",
-    rateLimitExceeded: 'Trop de tentatives. Patientez un peu et réessayez.',
+    rateLimited: 'Trop de tentatives. Patientez un peu et réessayez.',
     emailNotConfigured: "L'instance n'a pas de serveur de messagerie configuré.",
     adminEmailMissing:
       "Votre compte n'a pas d'adresse e-mail valide à laquelle envoyer un e-mail de test.",
+    invalidRequest:
+      "Le serveur a refusé la requête car elle n'est pas valide. Rechargez la page et réessayez.",
+    notFound: "L'élément demandé est introuvable. Il a peut-être été supprimé.",
+    internal: "Une erreur interne s'est produite sur le serveur. Réessayez plus tard.",
+    unauthenticated: 'Votre session a pris fin. Reconnectez-vous.',
+    permissionDenied: "Vous n'avez pas l'autorisation de faire cela.",
+    humanVerificationFailed: 'La vérification anti-robot a échoué. Effectuez-la et réessayez.',
+    emailNotFound: 'Aucun compte ne correspond à cette adresse e-mail. Vérifiez l’adresse.',
+    passwordIncorrect: 'Le mot de passe est incorrect.',
+    registrationIncomplete:
+      'L’inscription n’est pas terminée. Inscrivez-vous avec cette adresse e-mail pour accepter votre invitation.',
+    passwordNotSet: 'Aucun mot de passe n’est défini pour ce compte.',
+    passwordNotSetGoogle:
+      'Aucun mot de passe n’est défini pour ce compte. Connectez-vous avec Google.',
+    passwordNotSetGithub:
+      'Aucun mot de passe n’est défini pour ce compte. Connectez-vous avec GitHub.',
+    passwordNotSetGoogleGithub:
+      'Aucun mot de passe n’est défini pour ce compte. Connectez-vous avec Google ou GitHub.',
+    userDeactivated: 'Ce compte est désactivé. Demandez à un administrateur de le réactiver.',
+    registrationClosed:
+      'Les inscriptions sont fermées sur cette instance. Demandez une invitation à un administrateur.',
+    emailTaken: 'Cette adresse e-mail est déjà utilisée.',
+    invalidResetCode:
+      'Le code de réinitialisation est incorrect ou a expiré. Demandez-en un nouveau.',
+    oauthNotConfigured: "La connexion avec ce fournisseur n'est pas configurée sur cette instance.",
+    oauthFailed:
+      "Le fournisseur de connexion n'a pas confirmé votre compte. Vérifiez que votre adresse e-mail y est validée et réessayez.",
   },
   status: {
     logicalBackup: {
       inProgress: 'En cours',
       completed: 'Réussie',
       failed: 'Échouée',
-      deleted: 'Supprimée',
       canceled: 'Annulée',
     },
     physicalBackup: {
@@ -185,7 +222,10 @@ export const fr: typeof en = {
       offline: 'Hors ligne',
     },
   },
-  intervals: {
+  schedules: {
+    hours: 'Heures',
+    minutes: 'Minutes',
+    timePeriod: 'AM ou PM',
     types: {
       hourly: 'Toutes les heures',
       daily: 'Tous les jours',
@@ -202,18 +242,19 @@ export const fr: typeof en = {
       sat: 'Sam.',
       sun: 'Dim.',
     },
-    periods: {
-      day: '1 jour',
-      week: '1 semaine',
-      month: '1 mois',
-      threeMonths: '3 mois',
-      sixMonths: '6 mois',
-      year: '1 an',
-      twoYears: '2 ans',
-      threeYears: '3 ans',
-      fourYears: '4 ans',
-      fiveYears: '5 ans',
-      forever: 'Sans limite',
+    weekday: 'Jour de la semaine',
+    dayOfMonth: 'Jour du mois',
+    cronExpression: 'Expression cron (UTC)',
+    timeOfDay: 'Heure',
+    nextRun: 'Prochaine exécution : {{time}}',
+    invalidCron: 'Expression cron non valide',
+    cronHelp: {
+      format: 'Format cron : minute, heure, jour, mois, jour de la semaine (UTC)',
+      examples: 'Exemples :',
+      dailyAt2am: 'Tous les jours à 2 h 00 UTC',
+      every6Hours: 'Toutes les 6 heures',
+      mondaysAt3am: 'Tous les lundis à 3 h 00 UTC',
+      twiceAMonth: 'Le 1er et le 15 du mois à 4 h 30 UTC',
     },
   },
   auditLogs: {
@@ -225,10 +266,9 @@ export const fr: typeof en = {
       created: 'Date',
     },
     systemUser: 'Système',
-    loadedOfTotal: 'Chargées : {{loaded}} sur {{total}}',
     empty: "Aucune entrée d'audit trouvée.",
     loadingMore: "Chargement d'autres entrées...",
-    allLoaded: 'Toutes les entrées sont chargées ({{count}} au total)',
+    allLoaded: 'Toutes les entrées sont chargées',
   },
   settings: {
     title: 'Paramètres de Databasus',
@@ -269,6 +309,8 @@ export const fr: typeof en = {
       docs: 'La <docsLink>documentation SMTP</docsLink> explique comment connecter un serveur de messagerie.',
       sendTestEmail: 'Envoyer un e-mail de test',
       testEmailSent: 'E-mail de test envoyé à {{email}}',
+      testEmailNotDelivered:
+        "Le serveur de messagerie n'a pas accepté l'e-mail de test pour <email/> : <failureDetail/>",
     },
     healthcheck: {
       title: 'Vérification de disponibilité',
@@ -318,6 +360,9 @@ export const fr: typeof en = {
       title: 'Ajouter une base de données à sauvegarder',
       namePlaceholder: 'Ma base préférée',
       creating: 'Création de la base de données...',
+      finishing: 'Finalisation de la configuration de la base de données...',
+      createdButNotFinished:
+        "La base de données a été créée, mais sa configuration n'est pas terminée. Motif : {{reason}}",
       complete: 'Terminer',
       backupType: {
         title: 'Choisissez le type de sauvegarde',
@@ -338,10 +383,7 @@ export const fr: typeof en = {
       lastBackupError: {
         title: 'Erreur de la dernière sauvegarde',
         errorLabel: 'Erreur :',
-        clearHint: 'Pour effacer cette erreur (au choix) :',
-        clearByTestingConnection:
-          '- testez la connexion avec le bouton ci-dessous (même si vous avez déjà modifié les paramètres) ;',
-        clearByNextBackup: '- attendez que la prochaine sauvegarde se termine sans erreur ;',
+        clearedByNextBackup: 'L’erreur disparaîtra après la prochaine sauvegarde réussie.',
       },
       sections: {
         database: 'Paramètres de la base de données',
@@ -368,7 +410,6 @@ export const fr: typeof en = {
       replace: 'Remplacer',
     },
     fields: {
-      databaseType: 'Type de base de données',
       version: 'Version de {{engine}}',
       databaseName: 'Nom de la base',
       sslMode: 'Mode SSL',
@@ -401,6 +442,7 @@ export const fr: typeof en = {
       connectionStringParsed: 'Champs remplis à partir de la chaîne de connexion',
       connectionStringParsedWithoutPassword:
         'Champs remplis à partir de la chaîne de connexion. Saisissez le mot de passe manuellement.',
+      connectionTestFailed: 'Impossible de joindre la base de données : {{error}}',
       connectionTestPassed: {
         title: 'Test de connexion réussi',
         description: "Vous pouvez passer à l'étape suivante",
@@ -567,13 +609,13 @@ export const fr: typeof en = {
         transferExisting: 'Transférer avec le stockage actuel',
         selectFromTarget: "Choisir un stockage de l'espace de travail cible",
         blocked:
-          "Bases de données utilisant ce stockage : {{count}}. Le transfert est bloqué, car d'autres bases de données en dépendent.",
+          "D'autres bases de données sauvegardent dans ce stockage : il ne peut donc pas être transféré avec cette base de données.",
         canTransfer: 'Le stockage peut être transféré',
         selectPlaceholder: 'Choisissez un stockage',
         createNew: 'Créer un stockage',
         addTitle: 'Ajouter un stockage',
         description:
-          "Un stockage est l'endroit où les sauvegardes sont conservées (disque local, S3, Google Drive, etc.)",
+          "Un stockage est l'endroit où les sauvegardes sont conservées (disque local, S3, etc.)",
       },
       notifiers: {
         title: 'Canaux de notification (facultatif)',
@@ -766,7 +808,7 @@ export const fr: typeof en = {
       notifyWhenUnavailable: "Notifier en cas d'indisponibilité",
       checkIntervalMinutes: 'Intervalle de vérification (min)',
       attemptsBeforeDown: 'Tentatives avant indisponibilité',
-      storeAttemptsDays: "Conserver l'historique (jours)",
+      attemptRetentionDays: "Conserver l'historique (jours)",
       tooltips: {
         enable: 'Active ou désactive la vérification de disponibilité de cette base de données',
         notifyWhenUnavailable:
@@ -775,7 +817,7 @@ export const fr: typeof en = {
           'Fréquence de vérification de la disponibilité de la base de données (en minutes)',
         attemptsBeforeDown:
           'Nombre de tentatives échouées avant de considérer la base de données comme indisponible',
-        storeAttemptsDays:
+        attemptRetentionDays:
           "Nombre de jours pendant lesquels l'historique des vérifications de disponibilité est conservé",
       },
     },
@@ -796,7 +838,7 @@ export const fr: typeof en = {
       submit: "Créer l'espace de travail",
       defaultName: 'Mon espace de travail',
       description:
-        "Un espace de travail regroupe :<lineBreak/>- vos bases de données ;<lineBreak/>- les stockages (disque local, S3, Google Drive, etc.) ;<lineBreak/>- les canaux de notification (e-mail, Slack, Telegram, etc.) ;<lineBreak/>- le contrôle d'accès (si vous travaillez en équipe).",
+        "Un espace de travail regroupe :<lineBreak/>- vos bases de données ;<lineBreak/>- les stockages (disque local, S3, etc.) ;<lineBreak/>- les canaux de notification (e-mail, Slack, Telegram, etc.) ;<lineBreak/>- le contrôle d'accès (si vous travaillez en équipe).",
       nameRequired: "Saisissez un nom d'espace de travail",
       created: 'Espace de travail créé',
       permissionDenied: {
@@ -861,6 +903,7 @@ export const fr: typeof en = {
         description:
           "Cet utilisateur n'a pas encore de compte, mais il a été invité dans l'espace de travail. Dès qu'il s'inscrira avec cette adresse e-mail, il en deviendra automatiquement membre.",
       },
+      invitedMark: 'Invité',
       roleChanged: 'Rôle du membre modifié',
       remove: {
         tooltip: 'Supprimer le membre',
@@ -902,6 +945,7 @@ export const fr: typeof en = {
       newPassword: 'Nouveau mot de passe',
     },
     validation: {
+      emailInvalid: 'Saisissez une adresse e-mail valide',
       nameRequired: 'Le nom est obligatoire',
       emailRequired: "L'e-mail est obligatoire",
       passwordTooShort: 'Mot de passe trop court. Longueur minimale : {{minLength}}',
@@ -918,6 +962,9 @@ export const fr: typeof en = {
       submit: 'Se connecter',
       noAccount: 'Pas encore de compte ? <signUpLink>Inscrivez-vous</signUpLink>',
       forgotPassword: 'Mot de passe oublié ?',
+      setPassword: 'Définir un mot de passe',
+      passwordRecoveryHint: 'Utilisez la récupération de mot de passe pour en définir un.',
+      contactAdministratorHint: 'Contactez votre administrateur pour rétablir l’accès.',
     },
     signInCode: {
       title: 'Saisissez le code',
@@ -978,12 +1025,13 @@ export const fr: typeof en = {
         passwordsDoNotMatch: 'Les nouveaux mots de passe ne correspondent pas',
         changing: 'Changement du mot de passe...',
         submit: 'Changer le mot de passe',
-        signedInWithNewPassword: 'Vous êtes connecté avec votre nouveau mot de passe',
+        signInRequired:
+          'Mot de passe modifié. Connectez-vous à nouveau avec votre nouveau mot de passe.',
       },
     },
     list: {
       title: 'Utilisateurs de Databasus',
-      loadedOfTotal: 'Utilisateurs : {{loaded}} sur {{total}}',
+      loaded: 'Utilisateurs chargés : {{count}}',
       searchPlaceholder: 'Rechercher par e-mail ou par nom...',
       empty: 'Aucun utilisateur trouvé.',
       allLoaded: 'Tous les utilisateurs sont chargés ({{count}} au total)',
@@ -1007,6 +1055,7 @@ export const fr: typeof en = {
   },
   verification: {
     triggers: {
+      afterBackup: 'Après la sauvegarde',
       manual: 'Manuelle',
       scheduled: 'Planifiée',
     },
@@ -1022,18 +1071,6 @@ export const fr: typeof en = {
       afterBackup: 'Après chaque sauvegarde',
       afterBackupHint:
         'Se lance automatiquement après chaque sauvegarde réussie. Les vérifications encore en attente dans la file sont annulées, pour que la file ne grossisse pas sans fin quand les sauvegardes vont plus vite que les vérifications.',
-      weekday: 'Jour de la semaine',
-      dayOfMonth: 'Jour du mois',
-      timeOfDay: 'Heure de vérification',
-      cron: {
-        expression: 'Expression cron (UTC)',
-        format: 'Format cron : minute, heure, jour, mois, jour de la semaine (UTC)',
-        examples: 'Exemples :',
-        exampleEverySunday: '- {{expression}} : tous les dimanches à 4 h 00 UTC',
-        exampleEverySixHours: '- {{expression}} : toutes les 6 heures',
-        nextRun: 'Prochaine exécution : {{dateTime}}<lineBreak/>({{relativeTime}})',
-        invalid: 'Expression cron non valide',
-      },
       notifications: 'Notifications',
       noNotifications: 'Aucune',
     },
@@ -1060,8 +1097,16 @@ export const fr: typeof en = {
       },
       details: {
         title: 'Détails de la vérification de restauration',
-        loadFailed: 'Impossible de charger les détails de la vérification.',
         cancellationReason: "Motif de l'annulation",
+        diagnostic: {
+          title: 'Détails de l’erreur',
+          truncated:
+            'Une partie centrale du contenu a été omise pour respecter la limite de 64 Ko.',
+          unavailable: 'Aucun diagnostic détaillé n’a été enregistré pour cette vérification.',
+          copied: 'Diagnostic copié',
+          copyFailed:
+            'Impossible de copier le diagnostic. Sélectionnez et copiez le texte manuellement.',
+        },
         failure: 'Échec',
         sections: {
           status: 'Statut',
@@ -1099,7 +1144,7 @@ export const fr: typeof en = {
       },
       capacity: {
         cpu: '{{count}} CPU',
-        ram: '{{count}} GB de RAM',
+        ram: '{{size}} de RAM',
         disk: '{{count}} GB de disque',
         jobs: 'tâches : {{count}}',
         notReported: 'pas encore communiquées',
@@ -1193,7 +1238,6 @@ export const fr: typeof en = {
       hasSendError: "Erreur d'envoi",
     },
     create: {
-      title: 'Ajouter un canal de notification',
       namePlaceholder: 'Mes alertes',
     },
     config: {
@@ -1209,11 +1253,11 @@ export const fr: typeof en = {
       },
       removeConfirmation:
         'Voulez-vous vraiment supprimer ce canal de notification ? Cette action est irréversible.',
-      removeBlockedByDatabases:
-        "Ce canal de notification est utilisé par des bases de données. Retirez-le d'abord de ces bases de données.",
     },
+    secretKeptPlaceholder: 'Enregistré - laissez vide pour le conserver',
     testNotification: {
       send: 'Envoyer une notification de test',
+      notDelivered: "Le message de test n'a pas été remis : {{error}}",
       sent: {
         title: 'Notification de test envoyée !',
         description: 'La notification de test est bien partie',
@@ -1238,6 +1282,11 @@ export const fr: typeof en = {
       skipTls: 'Sans vérification TLS',
     },
     email: {
+      validation: {
+        targetEmail: 'Saisissez une adresse e-mail valide',
+        smtpHost: 'Saisissez un serveur SMTP',
+        smtpPort: 'Saisissez un port de 1 à 65535',
+      },
       targetEmail: 'E-mail du destinataire',
       targetEmailTooltip: "L'adresse e-mail à laquelle vous voulez recevoir les messages",
       smtpHost: 'Hôte SMTP',
@@ -1305,9 +1354,12 @@ export const fr: typeof en = {
       customHeaders: 'En-têtes personnalisés',
       customHeadersTooltip:
         'Ajoute des en-têtes HTTP personnalisés à la requête du webhook (par ex. Authorization, X-API-Key)',
-      savedHeadersHidden: '*Les en-têtes enregistrés sont masqués pour des raisons de sécurité',
+      savedHeadersHidden:
+        '*Les valeurs des en-têtes enregistrés sont masquées. Laissez une valeur vide pour la conserver',
       headers: 'En-têtes',
       headerNamePlaceholder: "Nom de l'en-tête",
+      headerNameInvalid:
+        "Utilisez uniquement des lettres latines, des chiffres et les caractères !#$%&'*+-.^_`|~. Les espaces sont interdits.",
       headerValuePlaceholder: "Valeur de l'en-tête",
       addHeader: 'Ajouter un en-tête',
       hiddenHeaderValue: '(masqué)',
@@ -1346,8 +1398,6 @@ export const fr: typeof en = {
       powerAutomateUrlLabel: 'URL Power Automate :',
       powerAutomateUrlTooltip:
         'URL HTTP de votre flux Power Automate (déclencheur When an HTTP request is received)',
-      showFullUrl: 'Afficher',
-      hideFullUrl: 'Masquer',
     },
     mattermost: {
       howToConnect: 'Comment connecter Mattermost ?',
@@ -1385,6 +1435,16 @@ export const fr: typeof en = {
     },
   },
   backups: {
+    cleanup: {
+      pending: 'Suppression des anciens fichiers. Fichiers restants : {{count}}.',
+      retrying: 'La suppression sera retentée pour les fichiers : {{count}}.',
+      retryStatus: 'Actualiser le statut',
+    },
+    storageSwitch: {
+      warning:
+        'Changer de stockage supprime immédiatement l’ancien historique des sauvegardes et active le nouveau stockage. Les anciens fichiers sont supprimés en arrière-plan. Un stockage inaccessible retarde le nettoyage. La suppression explicite de l’ancien stockage arrête le nettoyage automatique ; les fichiers restants doivent être supprimés manuellement. Les nouvelles sauvegardes physiques commencent par une FULL.',
+      confirm: 'Changer de stockage et supprimer l’historique',
+    },
     encryption: {
       none: 'Aucun',
       encrypted: 'Activé',
@@ -1394,6 +1454,7 @@ export const fr: typeof en = {
       encrypted: 'Chiffrer les fichiers de sauvegarde',
     },
     list: {
+      totalUsage: 'Espace utilisé : {{size}}',
       title: 'Sauvegardes',
       scheduledBackupsDisabled:
         'Les sauvegardes planifiées sont désactivées (vous pouvez les réactiver dans la configuration des sauvegardes)',
@@ -1415,6 +1476,7 @@ export const fr: typeof en = {
       },
     },
     filters: {
+      toggle: 'Filtres',
       allTypes: 'Tous les types',
       allStatuses: 'Tous les statuts',
       before: 'Avant le',
@@ -1426,29 +1488,10 @@ export const fr: typeof en = {
       createNewStorage: 'Créer un stockage',
       addStorageTitle: 'Ajouter un stockage',
       storageDescription:
-        "Un stockage est l'endroit où les sauvegardes sont conservées (disque local, S3, Google Drive, etc.)",
-      storageChangeWarning:
-        'Si vous changez de stockage, toutes les sauvegardes de ce stockage seront supprimées.',
-      storageChangeAcknowledge: "J'ai compris",
+        "Un stockage est l'endroit où les sauvegardes sont conservées (disque local, S3, etc.)",
       encryption: 'Chiffrement',
       notifications: 'Notifications',
       noNotifications: 'Aucune',
-      schedule: {
-        weekday: 'Jour de la semaine',
-        dayOfMonth: 'Jour du mois',
-        cronExpression: 'Expression cron (UTC)',
-        timeOfDay: 'Heure',
-        nextRun: 'Prochaine exécution : {{time}}',
-        invalidCron: 'Expression cron non valide',
-        cronHelp: {
-          format: 'Format cron : minute, heure, jour, mois, jour de la semaine (UTC)',
-          examples: 'Exemples :',
-          dailyAt2am: 'Tous les jours à 2 h 00 UTC',
-          every6Hours: 'Toutes les 6 heures',
-          mondaysAt3am: 'Tous les lundis à 3 h 00 UTC',
-          twiceAMonth: 'Le 1er et le 15 du mois à 4 h 30 UTC',
-        },
-      },
       gfs: {
         hourly: 'Horaires : {{count}}',
         daily: 'Quotidiennes : {{count}}',
@@ -1459,8 +1502,21 @@ export const fr: typeof en = {
       },
     },
     logical: {
+      retentionPeriods: {
+        day: '1 jour',
+        week: '1 semaine',
+        month: '1 mois',
+        threeMonths: '3 mois',
+        sixMonths: '6 mois',
+        year: '1 an',
+        twoYears: '2 ans',
+        threeYears: '3 ans',
+        fourYears: '4 ans',
+        fiveYears: '5 ans',
+        forever: 'Sans limite',
+      },
       retentionPolicyTypes: {
-        gfs: 'GFS (conserver les N dernières sauvegardes horaires, quotidiennes, hebdomadaires, mensuelles et annuelles)',
+        gfs: 'GFS (conservation par périodes calendaires)',
         timePeriod: 'Période (N derniers jours)',
         count: 'Nombre (N dernières sauvegardes)',
       },
@@ -1473,7 +1529,7 @@ export const fr: typeof en = {
         makeBackupNow: 'Lancer une sauvegarde maintenant',
         encrypted: 'Chiffrée',
         sizeTooltip:
-          "En haut : la taille du fichier de sauvegarde compressé réellement conservé dans le stockage (local, S3, Google Drive, etc.). En bas (en gris) : la taille d'origine de la base de données non compressée au moment de la sauvegarde. Une sauvegarde est en général environ 5 fois plus petite que la base.",
+          "En haut : la taille du fichier de sauvegarde compressé réellement conservé dans le stockage (local, S3, etc.). En bas (en gris) : la taille d'origine de la base de données non compressée au moment de la sauvegarde. Une sauvegarde est en général environ 5 fois plus petite que la base.",
         databaseSize: '{{size}} (taille de la base)',
         deleteConfirmation: 'Voulez-vous vraiment supprimer cette sauvegarde ?',
         actions: {
@@ -1502,9 +1558,6 @@ export const fr: typeof en = {
       },
       config: {
         interval: 'Intervalle de sauvegarde',
-        weekday: 'Jour de la semaine',
-        dayOfMonth: 'Jour du mois',
-        timeOfDay: 'Heure de la sauvegarde',
         encryptionTooltip:
           'Si la sauvegarde est chiffrée, les fichiers de sauvegarde dans votre stockage (S3, local, etc.) ne sont pas utilisables directement. Vous pouvez restaurer les sauvegardes via Databasus ou les télécharger déchiffrées avec le bouton « Télécharger ».',
         retentionPolicy: 'Politique de rétention',
@@ -1517,10 +1570,16 @@ export const fr: typeof en = {
           countValue: 'Sauvegardes les plus récentes : {{count}}',
           showGfsHint: "Qu'est-ce que GFS (Grandfather-Father-Son) ?",
           hideGfsHint: 'Masquer',
-          gfsHint:
-            "Rotation GFS (Grandfather-Father-Son) : conserve les N dernières sauvegardes horaires, quotidiennes, hebdomadaires, mensuelles et annuelles. Vous gardez ainsi des sauvegardes sur de longues périodes sans occuper trop d'espace de stockage.",
+          gfsHint: {
+            summary:
+              'GFS conserve les sauvegardes récentes et garde certaines anciennes plus longtemps.',
+            selection:
+              '<strong>Choisissez combien de sauvegardes conserver</strong> par heure, jour, semaine, mois et année. Seules les sauvegardes réussies comptent.',
+            fileCount:
+              '<strong>Une sauvegarde peut compter pour plusieurs réglages</strong>, le nombre total de fichiers peut donc varier.',
+          },
           gfsTooltip:
-            'Rotation Grandfather-Father-Son : conserve les N dernières sauvegardes horaires, quotidiennes, hebdomadaires, mensuelles et annuelles.',
+            'GFS : heures et jours calendaires récents, semaines, mois et années terminés, plus une candidate protégée pour la période en cours.',
           gfsFields: {
             hourly: 'Sauvegardes horaires',
             daily: 'Sauvegardes quotidiennes',
@@ -1561,8 +1620,9 @@ export const fr: typeof en = {
         walGap: 'Trou dans les WAL',
       },
       list: {
-        totalUsage: 'Espace utilisé : {{size}}',
         backUpNow: 'Sauvegarder maintenant',
+        startRequirement:
+          'Pour lancer une sauvegarde, activez les sauvegardes et choisissez un stockage dans la configuration des sauvegardes.',
         fullBackup: 'Sauvegarde complète',
         incrementalBackup: 'Sauvegarde incrémentale',
         restore: 'Restaurer',
@@ -1618,13 +1678,24 @@ export const fr: typeof en = {
         chainsKept: 'Chaînes conservées',
         fullBackupsKept: 'Sauvegardes complètes conservées',
         fullBackupsCountValue: 'Les plus récentes : {{count}}',
+        gfsHint: {
+          summary:
+            'GFS conserve les sauvegardes complètes récentes et garde certaines anciennes plus longtemps.',
+          selection:
+            '<strong>Choisissez combien de sauvegardes conserver</strong> par heure, jour, semaine, mois et année. Seules les sauvegardes réussies comptent.',
+          fileCount:
+            '<strong>Une sauvegarde peut compter pour plusieurs réglages</strong>, le nombre total de fichiers peut donc varier.',
+          scope:
+            '<strong>GFS ne concerne que les sauvegardes complètes.</strong> Les incrémentales et le WAL sont gérés séparément.',
+        },
         gfsTooltip:
-          'Rotation Grandfather-Father-Son : conserve les N dernières sauvegardes complètes horaires, quotidiennes, hebdomadaires, mensuelles et annuelles.',
+          'GFS : sauvegardes complètes réussies des heures et jours récents et des semaines, mois et années terminés, plus la candidate actuelle.',
       },
       restore: {
         errorHints: {
           downloadInProgress:
-            "Un téléchargement pour restauration est déjà en cours pour cette base de données. Attendez qu'il se termine, puis réessayez.",
+            'Vous avez déjà un téléchargement de sauvegarde ou de restauration en cours. Attendez sa fin, puis réessayez.',
+          noRestorableBackup: 'Lancez une sauvegarde complète, attendez sa fin, puis réessayez.',
           targetTimeUnreachable:
             "Impossible d'atteindre l'instant demandé : il y a un trou dans les WAL ou l'instant est hors de la plage disponible. Choisissez un autre instant ou restaurez le dernier point disponible.",
         },
@@ -1639,6 +1710,7 @@ export const fr: typeof en = {
           'Le lien de téléchargement est à usage unique et expire au bout de 15 minutes. Si une commande échoue avec une erreur 401, rouvrez cette fenêtre pour générer un nouveau lien.',
         copied: 'Copié',
         methods: {
+          label: 'Méthode de restauration',
           script: 'Par script',
           manual: 'Manuelle',
         },
@@ -1724,13 +1796,6 @@ export const fr: typeof en = {
           needsAttention: 'Demande votre attention',
           info: 'Pour information',
         },
-        keepingUpStates: {
-          unknown: 'Inconnu',
-          fallingBehind: 'Prend du retard',
-          catchingUp: 'Rattrape son retard',
-          idle: 'Calme',
-          keepingUp: 'Suit le rythme',
-        },
         banner: {
           collectingDataDescription:
             "Le streaming a démarré ; les premiers chiffres arrivent d'ici une minute.",
@@ -1780,6 +1845,13 @@ export const fr: typeof en = {
             "À ce rythme, la base de données supprimera des modifications que Databasus n'a pas encore reçues dans environ {{duration}}.",
         },
         reasons: {
+          systemIdentifierMismatch: {
+            title: 'L’adresse mène à un autre cluster',
+            whatHappened:
+              'Databasus a arrêté de recevoir les modifications car l’adresse mène à un autre cluster PostgreSQL. Les sauvegardes existantes sont conservées.',
+            whatToDo:
+              'Rétablissez le routage vers le cluster d’origine. Databasus réessaie automatiquement et efface cette erreur après la reprise du flux vérifié.',
+          },
           streamingStopped: {
             title: "L'enregistrement s'est arrêté",
             whatHappened: 'Databasus a cessé de recevoir des modifications il y a {{duration}}.',
@@ -2008,15 +2080,21 @@ export const fr: typeof en = {
     },
   },
   storages: {
+    usageUnavailable: 'Impossible d’actualiser l’espace occupé par les sauvegardes.',
+    cleanup: {
+      title: 'Le nettoyage est toujours en cours',
+      warning:
+        'Nous supprimons les fichiers de sauvegarde devenus inutiles, généralement après la suppression d’une base de données ou son passage à un autre stockage. Le nettoyage se termine habituellement rapidement. Si vous supprimez ce stockage maintenant, le nettoyage automatique s’arrêtera et vous devrez supprimer manuellement les fichiers de sauvegarde restants.',
+      wait: 'Attendre',
+      deleteAnyway: 'Supprimer quand même',
+    },
     types: {
       local: 'Stockage local',
       s3: 'S3',
-      googleDrive: 'Google Drive',
       nas: 'NAS',
       azureBlob: 'Azure Blob Storage',
       ftp: 'FTP',
       sftp: 'SFTP',
-      rclone: 'Rclone',
     },
     s3StorageClasses: {
       default: 'Par défaut (Standard)',
@@ -2032,10 +2110,13 @@ export const fr: typeof en = {
       connectionString: 'Chaîne de connexion',
     },
     sftpAuthMethods: {
+      both: 'Mot de passe et clé privée',
       password: 'Mot de passe',
       privateKey: 'Clé privée',
     },
     list: {
+      searchPlaceholder: 'Rechercher un stockage',
+      noSearchResults: 'Aucun stockage ne correspond à « {{query}} »',
       addStorage: 'Ajouter un stockage',
       description:
         "Un stockage est l'endroit où les sauvegardes sont conservées (disque local, S3, etc.)",
@@ -2045,30 +2126,19 @@ export const fr: typeof en = {
       type: {
         local: 'Type : stockage local',
         s3: 'Type : S3',
-        googleDrive: 'Type : Google Drive',
         nas: 'Type : NAS',
         azureBlob: 'Type : Azure Blob Storage',
         ftp: 'Type : FTP',
         sftp: 'Type : SFTP',
-        rclone: 'Type : Rclone',
       },
-      hasSaveError: "Erreur d'enregistrement",
     },
     config: {
       namePlaceholder: 'Saisissez un nom...',
       settingsTitle: 'Paramètres du stockage',
-      lastSaveError: {
-        title: "Erreur d'enregistrement",
-        errorLabel: 'Erreur :',
-        clearHint: 'Pour effacer cette erreur (au choix) :',
-        clearByTestingConnection:
-          '- testez la connexion avec le bouton ci-dessous (même si vous avez déjà modifié les paramètres) ;',
-        clearByNextSave: '- attendez que la prochaine sauvegarde soit enregistrée sans erreur ;',
-      },
       removeConfirmation:
-        'Voulez-vous vraiment supprimer ce stockage ? Cette action est irréversible. Les sauvegardes qui se trouvent dans ce stockage seront aussi supprimées.',
-      removeBlockedByDatabases:
-        "Ce stockage est utilisé par des bases de données. Retirez-le d'abord de ces bases de données.",
+        'Voulez-vous vraiment supprimer ce stockage ? Cette action est irréversible.',
+      removeBlockedByBackups:
+        "Une configuration de sauvegarde utilise ce stockage ou il contient encore des sauvegardes. Associez d'abord ces configurations à un autre stockage et supprimez ses sauvegardes.",
     },
     actions: {
       testConnection: 'Tester la connexion',
@@ -2077,6 +2147,7 @@ export const fr: typeof en = {
       title: 'Connexion réussie !',
       description: 'La connexion au stockage fonctionne',
     },
+    connectionTestFailed: 'Impossible de joindre le stockage : {{error}}',
     transfer: {
       title: 'Transférer le stockage vers un autre espace de travail',
       blockedByDatabases:
@@ -2088,7 +2159,6 @@ export const fr: typeof en = {
     },
     fields: {
       path: 'Chemin',
-      remotePath: 'Chemin distant',
       share: 'Partage',
       domain: 'Domaine',
       useSsl: 'Utiliser SSL',
@@ -2114,10 +2184,7 @@ export const fr: typeof en = {
       accountName: 'Nom du compte',
       accountKey: 'Clé du compte',
       containerName: 'Nom du conteneur',
-      clientId: 'ID client',
-      clientSecret: 'Secret client',
       userToken: 'Jeton utilisateur',
-      config: 'Configuration',
     },
     edit: {
       namePlaceholder: 'Mon stockage',
@@ -2145,10 +2212,6 @@ export const fr: typeof en = {
         storageClassTooltip:
           "Classe de stockage S3 des objets envoyés. Laissez la valeur par défaut pour Standard. Certains fournisseurs proposent des classes moins chères comme One Zone IA. N'utilisez pas Glacier/Deep Archive : les fichiers doivent être accessibles immédiatement pour les restaurations.",
       },
-      googleDrive: {
-        guideLink: 'Comment connecter Google Drive ?',
-        authorize: 'Autoriser',
-      },
       nas: {
         shareWithSlashWarning:
           'Le partage doit être un nom de partage unique. Utilisez le champ « Chemin » pour les sous-répertoires (par ex. Partage : Databasus, Chemin : DB1)',
@@ -2175,20 +2238,15 @@ export const fr: typeof en = {
           'Ne pas vérifier le certificat TLS. Activez cette option si votre serveur FTP utilise un certificat auto-signé. Attention : cela réduit la sécurité.',
       },
       sftp: {
+        savedPassword: 'Un mot de passe est enregistré. Laissez le champ vide pour le conserver.',
+        savedPrivateKey: 'Une clé privée est enregistrée. Laissez le champ vide pour la conserver.',
+        requiredPassword: 'Saisissez un mot de passe pour cette méthode.',
+        requiredPrivateKey: 'Saisissez une clé privée pour cette méthode.',
         privateKeyTooltip:
           'Collez votre clé privée SSH (format PEM). Les clés RSA, DSA, ECDSA et Ed25519 sont prises en charge.',
         skipHostKeyVerification: "Ignorer la vérification de la clé d'hôte",
         skipHostKeyTooltip:
           "Ne pas vérifier la clé d'hôte SSH. Activez cette option si vous faites confiance au serveur. Attention : cela réduit la sécurité.",
-      },
-      rclone: {
-        configTooltip:
-          "Collez ici le contenu de votre rclone.conf. Pour l'obtenir, exécutez 'rclone config file' et copiez le contenu du fichier. Cette configuration prend en charge plus de 70 fournisseurs de stockage cloud.",
-        configHiddenNote:
-          '*le contenu est masqué pour ne pas exposer de données sensibles. Pour mettre à jour la configuration existante, collez-en une nouvelle ici',
-        docsLink: 'Documentation de Rclone',
-        remotePathTooltip:
-          "Préfixe de chemin facultatif sur le stockage distant, où les sauvegardes seront conservées (par ex. '/backups' ou 'my-folder/backups')",
       },
     },
   },

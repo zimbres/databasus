@@ -1,6 +1,6 @@
 /* eslint-disable i18next/no-literal-string -- dayjs format tokens, not copy */
 // Detect date order (MDY, DMY, YMD) and separator from user's locale
-const getLocaleDateFormat = () => {
+export const getUserDateFormat = () => {
   const locale = navigator.language || 'en-US';
 
   // Use a test date where day, month, year are all different: March 15, 2023
@@ -48,7 +48,7 @@ const getIs12HourFormat = () => {
 };
 
 export const getUserTimeFormat = () => {
-  const { dateFormat } = getLocaleDateFormat();
+  const { dateFormat } = getUserDateFormat();
   const is12Hour = getIs12HourFormat();
 
   return {
@@ -57,8 +57,14 @@ export const getUserTimeFormat = () => {
   };
 };
 
+export const getUserClockFormat = () => {
+  const is12Hour = getIs12HourFormat();
+
+  return { use12Hours: is12Hour, format: is12Hour ? 'h:mm A' : 'HH:mm' };
+};
+
 export const getUserShortTimeFormat = () => {
-  const { shortDateFormat } = getLocaleDateFormat();
+  const { shortDateFormat } = getUserDateFormat();
   const is12Hour = getIs12HourFormat();
 
   return {

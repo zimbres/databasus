@@ -16,7 +16,6 @@ const CORE_PAGE_SETTINGS: Record<
 > = {
   "": { priority: 1.0, changeFrequency: "weekly" },
   installation: { priority: 0.9, changeFrequency: "weekly" },
-  "installation/agent": { priority: 0.8, changeFrequency: "monthly" },
   "advanced-config": { priority: 0.8, changeFrequency: "monthly" },
   "access-management": { priority: 0.8, changeFrequency: "monthly" },
   password: { priority: 0.8, changeFrequency: "monthly" },
@@ -25,7 +24,6 @@ const CORE_PAGE_SETTINGS: Record<
   "faq/localhost": { priority: 0.8, changeFrequency: "monthly" },
   "faq/supabase": { priority: 0.8, changeFrequency: "monthly" },
   storages: { priority: 0.8, changeFrequency: "monthly" },
-  "storages/google-drive": { priority: 0.7, changeFrequency: "monthly" },
   "storages/cloudflare-r2": { priority: 0.7, changeFrequency: "monthly" },
   notifiers: { priority: 0.8, changeFrequency: "monthly" },
   "notifiers/slack": { priority: 0.7, changeFrequency: "monthly" },
@@ -50,15 +48,6 @@ const UNTRANSLATED_PAGE_SETTINGS: Record<
 > = {
   privacy: { priority: 0.8, changeFrequency: "monthly" },
   "terms-of-use": { priority: 0.6, changeFrequency: "monthly" },
-  contribute: { priority: 0.8, changeFrequency: "monthly" },
-  "contribute/how-to-add-storage": {
-    priority: 0.7,
-    changeFrequency: "monthly",
-  },
-  "contribute/how-to-add-notifier": {
-    priority: 0.7,
-    changeFrequency: "monthly",
-  },
 };
 
 export default function sitemap(): MetadataRoute.Sitemap {

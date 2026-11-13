@@ -151,7 +151,7 @@ export default function SecurityPage() {
               <p>
                 Internamente, o Databasus usa uma base de dados PostgreSQL para
                 guardar detalhes de conexão e as configurações de notificadores
-                e armazenamentos (S3, Google Drive, Dropbox, etc.).
+                e armazenamentos (S3, Azure Blob Storage, FTP, etc.).
               </p>
 
               <p>Todos os dados sensíveis são criptografados. Por exemplo:</p>
@@ -215,7 +215,7 @@ export default function SecurityPage() {
 
               <p>
                 <strong>Resultado</strong>: mesmo que alguém consiga acesso ao
-                seu armazenamento na nuvem (S3, Google Drive, etc.), não
+                seu armazenamento na nuvem (S3, Azure Blob Storage, etc.), não
                 consegue ler os backups sem a sua chave mestra.
               </p>
 
@@ -336,113 +336,115 @@ export default function SecurityPage() {
               </h2>
 
               <p>
-                O Databasus trabalha com dados sensíveis, por isso prevenir
-                vulnerabilidades, acessos não autorizados e vazamentos de dados
-                é uma preocupação central. Investimos nisso dos dois lados do
-                sistema: no próprio código (verificações de permissões,
-                criptografia, tratamento cuidadoso de segredos) e na
-                infraestrutura ao redor dele (análise de dependências, resposta
-                a CVEs, práticas de DevSecOps). O pipeline abaixo roda
-                automaticamente em cada commit e PR. Nenhuma camada chega
-                sozinha, mas juntas reduzem a probabilidade de código
-                vulnerável, dependências inseguras, imagens quebradas ou backups
-                não restauráveis chegarem a uma release.
+                O Databasus trabalha com dados sensíveis. Antes de cada versão, verificações
+                automáticas buscam problemas de segurança e conferem se os backups podem ser
+                restaurados. Elas reduzem os riscos, mas não garantem a ausência de
+                vulnerabilidades.
               </p>
 
               <h3 id="static-analysis">Análise estática</h3>
 
               <p>
-                A análise estática roda em várias passagens independentes. O
-                CodeQL analisa todo o código em busca de problemas de segurança.
-                Em cada PR, o <strong>gitleaks</strong> procura segredos vazados e o{" "}
-                <strong>semgrep</strong> verifica o código com regras de segurança.
-                Os
-                Dockerfiles e os workflows de CI têm regras adicionais próprias
-                (referências de actions fixadas, permissões de menor privilégio,
-                imagens base suspeitas), por isso padrões inseguros são
-                sinalizados antes de chegarem a ser integrados.
+                O CodeQL analisa Go, JavaScript/TypeScript e workflows do GitHub Actions. O
+                gitleaks busca segredos expostos no histórico Git da versão. O semgrep
+                verifica o código-fonte, os Dockerfiles e os workflows de CI com regras de
+                segurança. Essas análises rodam antes de cada versão e semanalmente.
               </p>
 
               <p>
-                Além dessas verificações por PR, o{" "}
-                <strong>Codex Security</strong> da OpenAI executa auditorias
-                regulares e mais profundas de todo o código. É um programa
-                separado que encontra problemas arquiteturais e transversais que
-                as análises limitadas ao PR não veem.
-              </p>
-
-              <h3 id="dependency-management">Gestão de dependências</h3>
-
-              <p>
-                O Dependabot vigia todas as nossas dependências contra a GitHub
-                Advisory Database e sinaliza CVEs minutos depois da publicação.
-                As atualizações passam por um período de espera para que as
-                versões recém-publicadas amadureçam antes de as adotarmos, uma
-                defesa deliberada contra incidentes de pacotes comprometidos,
-                como ataques à cadeia de suprimentos.
+                Alertas <strong>CRITICAL</strong> do CodeQL abertos na análise da versão
+                bloqueiam a publicação. Alertas <strong>HIGH</strong> geram avisos.
               </p>
 
               <p>
-                A <strong>Dependency Review Action</strong> bloqueia de imediato
-                qualquer PR que introduza um novo CVE <strong>HIGH</strong> ou{" "}
-                <strong>CRITICAL</strong>.
+                O Codex Security da OpenAI também realiza auditorias periódicas mais
+                profundas. Elas podem encontrar problemas de arquitetura que análises mais
+                específicas deixam passar. Essas auditorias são independentes das
+                verificações automáticas de publicação.
               </p>
 
-              <h3 id="container-and-ci-hardening">
-                Endurecimento de containers e CI
-              </h3>
+              <h3 id="dependency-management">Gerenciamento de dependências</h3>
+
+              <p>
+                Atualizações comuns aguardam sete dias completos para pacotes, ferramentas
+                de desenvolvimento e GitHub Actions. Para imagens, clientes de banco de
+                dados e extensões de verificação independentes, o prazo é de quatorze dias.
+                Os responsáveis conferem datas de publicação e compatibilidade, incluindo
+                versões exatas e atualizações de segurança que podem escapar dos filtros de
+                idade. Toda exceção é informada com seu motivo.
+              </p>
+
+              <p>
+                O Dependency Review Action compara a versão candidata com a anterior e
+                bloqueia novas vulnerabilidades <strong>HIGH</strong> ou{" "}
+                <strong>CRITICAL</strong>. O govulncheck bloqueia a verificação de Go quando
+                nosso código pode chamar uma função com vulnerabilidade conhecida. O comando{" "}
+                <code>go mod verify</code> compara os módulos Go baixados com suas somas de
+                verificação registradas.
+              </p>
+
+              <p>
+                Antes de publicar uma versão ou imagens de desenvolvimento,{" "}
+                <code>mise run verify-deps</code> confere as versões fixas de ferramentas,
+                imagens e GitHub Actions. Também verifica se as versões relacionadas dos
+                ambientes de execução coincidem, além dos hashes e permissões de execução
+                dos clientes de banco de dados incluídos no repositório. Essas verificações
+                cobrem uma lista definida de declarações e arquivos locais. Os gerenciadores
+                de pacotes verificam separadamente as versões dos arquivos de lock e as
+                somas de verificação dos pacotes baixados.
+              </p>
+
+              <p>
+                A verificação local de dependências não certifica a segurança de código de
+                terceiros nem exige uma idade mínima para cada dependência. A escolha e a
+                revisão das versões continuam sob responsabilidade dos mantenedores.
+              </p>
+
+              <h3 id="container-and-ci-hardening">Segurança de contêineres e CI</h3>
 
               <ul>
                 <li>
-                  As imagens de containers são analisadas com{" "}
-                  <strong>Trivy</strong> em cada build.
+                  O Trivy analisa a imagem da aplicação em amd64 e arm64. Vulnerabilidades{" "}
+                  <strong>CRITICAL</strong> com correção disponível fazem a verificação
+                  falhar. Vulnerabilidades <strong>HIGH</strong> com correção são relatadas
+                  sem bloqueá-la. Vulnerabilidades sem correção ficam fora dessa verificação.
                 </li>
                 <li>
-                  Uma passagem separada do Trivy sobre o Dockerfile detecta
-                  configurações erradas antes de entrarem numa imagem.
+                  Uma análise de configuração separada do Trivy bloqueia problemas{" "}
+                  <strong>HIGH</strong> e <strong>CRITICAL</strong> nos Dockerfiles da
+                  aplicação, do agente de verificação e de determinadas imagens de teste.
                 </li>
                 <li>
-                  Todas as GitHub Actions estão fixadas a SHAs de commit
-                  completos, em vez de tags flutuantes como <code>@v4</code> ou{" "}
-                  <code>@main</code>, que foram um vetor de ataque ativo em
-                  2025.
+                  As GitHub Actions de terceiros são fixadas em SHAs completos de commit.
+                  Assim, mudar uma tag não substitui silenciosamente o código da action
+                  executada.
                 </li>
                 <li>
-                  Os workflows usam permissões de menor privilégio por padrão e
-                  só as elevam por job quando é realmente necessário.
+                  Por padrão, os workflows têm acesso somente de leitura ao repositório. Cada
+                  job recebe permissões adicionais apenas quando precisa.
                 </li>
               </ul>
 
               <h3 id="testing-and-verification">Testes e verificação</h3>
 
               <p>
-                Os caminhos críticos estão cobertos por testes unitários e de
-                integração, executados contra containers de bases de dados reais
-                para cada motor suportado e cada versão principal.
+                Testes unitários e de integração cobrem comportamentos críticos. Antes de
+                cada versão, ciclos completos de backup e restauração rodam em contêineres
+                reais para cada mecanismo e versão principal compatíveis. Eles verificam a
+                restauração dos dados, não apenas a criação de um arquivo de backup.
               </p>
 
               <p>
-                A restauração é o caminho que mais importa numa ferramenta de
-                backup, por isso a testamos explicitamente: cada PR executa
-                ciclos completos de backup e restauração contra esses mesmos
-                containers reais, confirmando que os backups podem realmente ser
-                restaurados de ponta a ponta, e não apenas escritos com sucesso.
+                As verificações também incluem lint, checagem de tipos, testes no navegador,
+                smoke tests de imagens e builds e testes nativos em amd64 e arm64. A
+                publicação aguarda a aprovação de todos os jobs obrigatórios, incluindo as
+                verificações de segurança descritas acima.
               </p>
 
-              <p>
-                O resto do pipeline de CI/CD executa lint, verificação de tipos,
-                a suíte completa de testes, smoke tests das imagens e builds
-                multiarquitetura em cada PR. Uma release só sai se tudo isso
-                passar.
-              </p>
-
-              <h3 id="reporting-a-vulnerability">
-                Reportar uma vulnerabilidade
-              </h3>
+              <h3 id="reporting-a-vulnerability">Como relatar uma vulnerabilidade</h3>
 
               <p>
-                Encontrou uma vulnerabilidade? Reporte-a pela aba Security do
-                GitHub. Veja o{" "}
+                Relate vulnerabilidades de forma privada pelos contatos de{" "}
                 <a
                   href="https://github.com/databasus/databasus?tab=security-ov-file#readme"
                   target="_blank"
@@ -450,8 +452,7 @@ export default function SecurityPage() {
                 >
                   SECURITY.md
                 </a>
-                . Os relatórios de segurança são a fila de trabalho com maior
-                prioridade.
+                . Não abra uma issue pública. Relatos de segurança têm prioridade.
               </p>
             </article>
           </div>

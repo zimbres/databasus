@@ -1,0 +1,231 @@
+import { createHash, randomUUID } from 'node:crypto';
+import { cp, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { availableParallelism, tmpdir } from 'node:os';
+import { basename, dirname, join, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+import { runChild } from './runChild.ts';
+
+// The CI browser checks require two workers per shard.
+const CI_WORKER_COUNT = 2;
+
+// Locally each worker drives one Chromium page against a static preview. Half the logical processors,
+// rounded up, leaves the other half to the suites that a full test run starts beside this one.
+const getLocalWorkerCount = (processorCount: number) =>
+  Math.max(CI_WORKER_COUNT, Math.ceil(processorCount / 2));
+
+export const runBrowser = async ({
+  frontendRoot,
+  args,
+  architecture = process.arch,
+  isCi = Boolean(process.env.CI),
+  processorCount = availableParallelism(),
+}: {
+  frontendRoot: string;
+  args: string[];
+  architecture?: string;
+  isCi?: boolean;
+  processorCount?: number;
+}): Promise<number> => {
+  if (!args.includes('--project=ui')) throw new Error('Select exactly --project=ui.');
+  const isUpdatingReferences = args.includes('--update-references');
+  const shardArguments = args.filter((argument) => argument.startsWith('--shard='));
+  const shard = shardArguments[0]?.slice('--shard='.length);
+  const shardParts = shard?.match(/^([1-9][0-9]*)\/([1-9][0-9]*)$/);
+  if (
+    shardArguments.length > 1 ||
+    (shard !== undefined &&
+      (!shardParts ||
+        !Number.isSafeInteger(Number(shardParts[1])) ||
+        !Number.isSafeInteger(Number(shardParts[2])) ||
+        Number(shardParts[1]) > Number(shardParts[2])))
+  )
+    throw new Error('Invalid browser shard; use one --shard=index/count with 1 <= index <= count.');
+  if (shard && isUpdatingReferences)
+    throw new Error('Browser reference updates require the complete UI suite.');
+  if (
+    args.some(
+      (argument) =>
+        !['--project=ui', '--update-references'].includes(argument) &&
+        !argument.startsWith('--shard='),
+    )
+  )
+    throw new Error('Unsupported browser argument; use the documented UI entry points.');
+
+  if (architecture !== 'x64' && architecture !== 'arm64')
+    throw new Error(`Unsupported browser architecture: ${architecture}`);
+  const platform = `linux/${architecture === 'x64' ? 'amd64' : 'arm64'}`;
+  const workerCount = isCi ? CI_WORKER_COUNT : getLocalWorkerCount(processorCount);
+
+  const environment = JSON.parse(
+    await readFile(join(frontendRoot, 'browser/environment.json'), 'utf8'),
+  );
+  const mise = await readFile(join(frontendRoot, '../mise.toml'), 'utf8');
+  if (
+    !mise.includes(`node = "${environment.nodeVersion}"`) ||
+    !mise.includes(`pnpm = "${environment.pnpmVersion}"`)
+  )
+    throw new Error('Browser tool versions disagree with mise.toml');
+
+  const inputs = [
+    'browser/Dockerfile',
+    'browser/environment.json',
+    '../tools/pnpm/package.json',
+    '../tools/pnpm/package-lock.json',
+    'package.json',
+    'pnpm-lock.yaml',
+    'pnpm-workspace.yaml',
+  ];
+  const identity = createHash('sha256');
+  identity.update(platform);
+  for (const input of inputs) identity.update(await readFile(join(frontendRoot, input)));
+  const image = `databasus-browser-ui:${identity.digest('hex').slice(0, 24)}`;
+
+  const runId = randomUUID();
+  const container = `databasus-browser-ui-${runId}`;
+  const temporaryRoot = await mkdtemp(join(tmpdir(), 'databasus-browser-ui-'));
+  const workspace = join(temporaryRoot, 'frontend');
+  const controller = new AbortController();
+  let isInterrupted = false;
+  let resultStatus = 1;
+  let operationError: unknown;
+
+  const interrupt = () => {
+    isInterrupted = true;
+    controller.abort();
+  };
+  process.on('SIGINT', interrupt);
+  process.on('SIGTERM', interrupt);
+
+  try {
+    const context = join(temporaryRoot, 'image');
+    await mkdir(context);
+    for (const input of ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml'])
+      await cp(join(frontendRoot, input), join(context, input));
+    await cp(join(frontendRoot, 'browser/Dockerfile'), join(context, 'Dockerfile'));
+    await mkdir(join(context, 'pnpm-bootstrap'));
+    for (const input of ['package.json', 'package-lock.json'])
+      await cp(join(frontendRoot, '../tools/pnpm', input), join(context, 'pnpm-bootstrap', input));
+
+    const built = await runChild(
+      'docker',
+      [
+        'build',
+        '--platform',
+        platform,
+        '--build-arg',
+        `NODE_ARCH=${architecture}`,
+        '--build-arg',
+        `NODE_VERSION=${environment.nodeVersion}`,
+        '--build-arg',
+        `NODE_ARCHIVE_SHA256=${environment.nodeArchiveSha256[architecture]}`,
+        '--tag',
+        image,
+        context,
+      ],
+      { signal: controller.signal },
+    );
+    if (built) resultStatus = built;
+    else {
+      const excluded = new Set([
+        'node_modules',
+        'dist',
+        'browser-results',
+        'playwright-report',
+        'test-results',
+        '.git',
+      ]);
+      await cp(frontendRoot, workspace, {
+        recursive: true,
+        filter: (path) => !excluded.has(basename(path)) && !path.endsWith('.tsbuildinfo'),
+      });
+      await mkdir(join(temporaryRoot, 'home'));
+      console.log(
+        `Browser environment: ${environment.playwrightImage}; Node ${environment.nodeVersion}; pnpm ${environment.pnpmVersion}; run ${runId}`,
+      );
+
+      const status = await runChild(
+        'docker',
+        [
+          'run',
+          '--rm',
+          '--init',
+          '--name',
+          container,
+          '--platform',
+          platform,
+          '--shm-size=1g',
+          '--user',
+          `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
+          '--volume',
+          `${temporaryRoot}:/work:Z`,
+          '--workdir',
+          '/work/frontend',
+          '--env',
+          'HOME=/work/home',
+          '--env',
+          'CI=1',
+          '--env',
+          `UPDATE_REFERENCES=${isUpdatingReferences ? '1' : '0'}`,
+          '--env',
+          `BROWSER_SHARD=${shard ?? ''}`,
+          '--env',
+          `BROWSER_WORKERS=${workerCount}`,
+          image,
+          'sh',
+          '-c',
+          'cp -a /opt/dependencies/node_modules ./node_modules && node tooling/verifyBrowserShardExecution.ts && node tooling/browserInside.ts',
+        ],
+        { signal: controller.signal },
+      );
+      if (isUpdatingReferences && status === 0)
+        await cp(join(workspace, 'browser/references'), join(frontendRoot, 'browser/references'), {
+          recursive: true,
+        });
+      resultStatus = status;
+    }
+  } catch (error) {
+    if (isInterrupted) resultStatus = 130;
+    else operationError = error;
+  } finally {
+    try {
+      const removed = await runChild('docker', ['rm', '--force', container]);
+      if (removed)
+        operationError ??= new Error(`Could not remove owned browser container: ${container}`);
+    } catch (error) {
+      operationError ??= error;
+    }
+
+    const artifacts = join(frontendRoot, 'browser-results', runId);
+    try {
+      await mkdir(artifacts, { recursive: true });
+      await cp(join(workspace, 'test-results'), artifacts, { recursive: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT')
+        console.error('Could not retain browser artifacts:', error);
+    }
+
+    try {
+      await rm(temporaryRoot, { recursive: true, force: true });
+    } catch (error) {
+      operationError ??= error;
+    }
+
+    process.off('SIGINT', interrupt);
+    process.off('SIGTERM', interrupt);
+  }
+  if (operationError) throw operationError;
+  return resultStatus;
+};
+
+if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+  try {
+    process.exitCode = await runBrowser({
+      frontendRoot: resolve(dirname(fileURLToPath(import.meta.url)), '..'),
+      args: process.argv.slice(2),
+    });
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  }
+}

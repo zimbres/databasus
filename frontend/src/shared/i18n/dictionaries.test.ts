@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DICTIONARIES } from './dictionaries';
+import { DICTIONARIES } from '@/shared/i18n/dictionaries';
 
 type Dictionary = { [key: string]: string | Dictionary };
 
@@ -42,6 +42,13 @@ const translations = Object.entries(DICTIONARIES).filter(([locale]) => locale !=
 
 describe.each(translations)('the %s dictionary', (locale, dictionary) => {
   const translated = flatten(dictionary);
+
+  // The typeof en annotation catches a missing or leftover key at compile time, but a dictionary
+  // built through a variable or a spread escapes that check. Comparing the flat key sets keeps the
+  // runtime shape honest for every shipped language.
+  it('has exactly the English key set', () => {
+    expect([...translated.keys()].sort()).toEqual([...english.keys()].sort());
+  });
 
   it('uses the same {{placeholders}} as English in every message', () => {
     const mismatches = [...english]

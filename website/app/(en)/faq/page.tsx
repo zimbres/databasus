@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getLanguageAlternates } from "@/app/i18n";
+import { getLanguageAlternates, getLocalizedHref } from "@/app/i18n";
 import DocsNavbarComponent from "@/app/components/DocsNavbarComponent";
 import DocsSidebarComponent from "@/app/components/DocsSidebarComponent";
 import DocTableOfContentComponent from "@/app/components/DocTableOfContentComponent";
@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     description:
       "Frequently asked questions about Databasus PostgreSQL backup tool with MySQL, MariaDB and MongoDB support. Learn how to backup localhost databases, understand backup formats, compression methods and more.",
     type: "article",
+    locale: "en_US",
     url: "https://databasus.com/faq",
   },
   twitter: {
@@ -70,7 +71,7 @@ export default function FAQPage() {
                 name: "How do physical and PITR (Point-in-Time Recovery) backups work?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Databasus runs physical backups remotely from its own host, connecting to your PostgreSQL over the standard replication protocol, so nothing needs to be installed on the database server. Databases in closed networks can be reached through an SSH tunnel. Physical backups use PostgreSQL 17's native stack: full backups via pg_basebackup, block-level incrementals via pg_basebackup --incremental driven by server-side WAL summaries (summarize_wal = on), and continuous WAL streaming via pg_receivewal. Physical backups require PostgreSQL 17 or newer; on older versions you use logical pg_dump backups instead. To restore to a point in time, pg_combinebackup reconstructs a runnable data directory from the full backup and its incremental chain, and PostgreSQL then replays WAL up to the target time you choose, recovering to any second between backups. The Databasus UI gives step-by-step instructions for restoring to a host or a Docker database, either through a ready-made script that makes the restore a single command or by downloading the backups and rebuilding the chain of full, incremental and WAL parts yourself. Incremental and WAL are optional: you can take only a full backup, and WAL is not mandatory. We use PostgreSQL 17 native backups because they reuse PostgreSQL's own battle-tested backup machinery instead of reinventing it, work with remote databases including managed services like RDS and Cloud SQL, and give near-zero data loss.",
+                  text: "Databasus runs physical backups remotely from its own host, connecting to your PostgreSQL over the standard replication protocol, so nothing needs to be installed on the database server. Databases in closed networks can be reached through an SSH tunnel. Physical backups use PostgreSQL 17's native stack: full backups via pg_basebackup, block-level incrementals via pg_basebackup --incremental driven by server-side WAL summaries (summarize_wal = on), and continuous WAL streaming via pg_receivewal. Physical backups require PostgreSQL 17 or newer; on older versions you use logical pg_dump backups instead. To restore to a point in time, pg_combinebackup reconstructs a runnable data directory from the full backup and its incremental chain, and PostgreSQL then replays WAL up to the target time you choose, recovering to any second between backups. The Databasus UI gives step-by-step instructions for restoring to a host or a Docker database, either through a ready-made script that makes the restore a single command or by downloading the backups and rebuilding the chain of full, incremental and WAL parts yourself. Incremental and WAL are optional: you can take only a full backup, and WAL is not mandatory. We use PostgreSQL 17 native backups because they reuse PostgreSQL's own battle-tested backup machinery instead of reinventing it and give near-zero data loss.",
                 },
               },
               {
@@ -95,6 +96,14 @@ export default function FAQPage() {
                 acceptedAnswer: {
                   "@type": "Answer",
                   text: "In March 2026, Databasus was accepted into both Claude for Open Source by Anthropic and Codex for Open Source by OpenAI. Being backed by these programs is a reliability signal — the project has been independently evaluated and recognized by industry leaders as critical open-source infrastructure worth supporting.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "How is AI used in Databasus development?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "AI helps us develop Databasus, from planning and implementation to tests and documentation. People set the direction and make the final decision. A human reads every line before a change is merged. We use spec-driven development (SDD) with OpenSpec to agree on behavior before implementation. Independent review at each stage Automatic hooks start separate reviewer sessions with read-only access to the repository. Each agent inspects the relevant code and returns its own findings. The implementing agent cannot approve its own work. Review starts before implementation. Separate planning agents look for simpler solutions, check proposed names and assess the design. They also check that requirements and verification tasks agree. Code reviewer: Looks for bugs, missed edge cases, broken error handling, races, resource leaks and security problems. Requirements reviewer: Traces each requirement to its implementation and tests. Checks that the tests actually prove the promised behavior. Architecture reviewer: Checks module boundaries, dependency direction, data ownership, migrations and API rules. Code structure reviewer: Checks names, file and function responsibilities, comments and readability. Test reviewer: Checks whether tests would catch missing behavior or a regression. Also checks condition waits, cleanup and verification evidence. Documentation and task reviewer: Checks that documentation matches the code, tasks are complete and verification claims have evidence. Full implementation reviews run in parallel. Each changed specification gets its own requirements reviewer, alongside separate architecture, test and documentation reviewers. A change covering two specifications therefore gets five full-review agents. Blocking findings stop acceptance. The implementing agent fixes them or explains why a finding is incorrect. A follow-up reviewer checks that resolution and the subsequent edits. A review that could not run does not count as passed. Automated checks and real restores Independent review works alongside strict automated checks. golangci-lint and our architecture linter check backend dependencies, module boundaries and migration rules. API checks validate OpenAPI contracts and generated code. Frontend checks cover TypeScript, React, layer imports, styles and localization. Ruff and ty check Python formatting, lint rules and types. ShellCheck checks shell scripts. actionlint checks GitHub Actions workflows. Pre-commit hooks check affected backend, frontend and Python files without rewriting them. CI also runs linting. Tests exercise real behavior. Backend tests use the application API and check engines against real database containers. End-to-end scenarios create backups, restore them and inspect the restored data. Other tests cover upgrades, frontend screens and browser workflows with visual comparisons. Checks are chosen for each change. Required release suites run on amd64 and arm64. The implementing agent runs the relevant linters and tests before review; review agents inspect the evidence without rerunning those commands. Before publication, CodeQL and Semgrep analyze code, Gitleaks scans for secrets and dependency checks look for vulnerabilities. Trivy scans container images and Dockerfiles. Required CI checks must pass before release.",
                 },
               },
             ],
@@ -307,12 +316,6 @@ export default function FAQPage() {
                   thousands of tests and edge-cases behind them
                 </li>
                 <li>
-                  They work with remote databases, including managed services
-                  like Amazon RDS and Google Cloud SQL that expose the
-                  replication protocol but forbid installing software on the
-                  host
-                </li>
-                <li>
                   They give near-zero data loss, letting you restore to any
                   second between backups
                 </li>
@@ -380,23 +383,140 @@ export default function FAQPage() {
                 time, so nothing breaks.
               </p>
 
+              <h2 id="ai-usage">How is AI used in Databasus development?</h2>
+
               <p>
-                You can read the full reasoning in the architecture decision
-                records:{" "}
-                <a
-                  href="https://github.com/databasus/databasus/blob/main/adr/0008-why-pg17-native-backups-with-mandatory-wal-summary.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  ADR-0008: PG17-native backups with mandatory WAL summary
-                </a>{" "}
-                and{" "}
-                <a
-                  href="https://github.com/databasus/databasus/blob/main/adr/0009-why-remote-physical-backups-instead-of-agents.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  ADR-0009: remote physical backups instead of agents
+                AI helps us develop Databasus, from planning and implementation to tests and documentation.
+                People set the direction and make the final decision.{" "}
+                <strong>A human reads every line before a change is merged.</strong>
+              </p>
+
+              <p>
+                We use spec-driven development (SDD) with{" "}
+                <a href="https://github.com/databasus/databasus/tree/main/openspec">OpenSpec</a> to agree on
+                behavior before implementation.
+              </p>
+
+              <h3 id="ai-review-hooks">Independent review at each stage</h3>
+
+              <p>
+                Automatic hooks start separate reviewer sessions with read-only access to the repository. Each
+                agent inspects the relevant code and returns its own findings. The implementing agent cannot
+                approve its own work.
+              </p>
+
+              <p>
+                Review starts before implementation. Separate planning agents look for simpler solutions, check
+                proposed names and assess the design. They also check that requirements and verification tasks
+                agree.
+              </p>
+
+              <ul>
+                <li>
+                  <strong>Code reviewer:</strong> Looks for bugs, missed edge cases, broken error handling,
+                  races, resource leaks and security problems.
+                </li>
+                <li>
+                  <strong>Requirements reviewer:</strong> Traces each requirement to its implementation and
+                  tests. Checks that the tests actually prove the promised behavior.
+                </li>
+                <li>
+                  <strong>Architecture reviewer:</strong> Checks module boundaries, dependency direction, data
+                  ownership, migrations and API rules.
+                </li>
+                <li>
+                  <strong>Code structure reviewer:</strong> Checks names, file and function responsibilities,
+                  comments and readability.
+                </li>
+                <li>
+                  <strong>Test reviewer:</strong> Checks whether tests would catch missing behavior or a
+                  regression. Also checks condition waits, cleanup and verification evidence.
+                </li>
+                <li>
+                  <strong>Documentation and task reviewer:</strong> Checks that documentation matches the code,
+                  tasks are complete and verification claims have evidence.
+                </li>
+              </ul>
+
+              <p>
+                Full implementation reviews run in parallel. Each changed specification gets its own
+                requirements reviewer, alongside separate architecture, test and documentation reviewers. A
+                change covering two specifications therefore gets five full-review agents.
+              </p>
+
+              <p>
+                <strong>Blocking findings stop acceptance.</strong> The implementing agent fixes them or
+                explains why a finding is incorrect. A follow-up reviewer checks that resolution and the
+                subsequent edits. A review that could not run does not count as passed.
+              </p>
+
+              <p>
+                <a href="https://github.com/databasus/databasus/blob/main/.agent-hooks/review_gate.py">
+                  Review hook implementation
+                </a>
+                {" · "}
+                <a href="https://github.com/databasus/databasus/tree/main/.agent-hooks">
+                  Reviewer instructions
+                </a>
+              </p>
+
+              <h3 id="ai-linting">Automated checks and real restores</h3>
+
+              <p>
+                Independent review works alongside strict automated checks. golangci-lint and our architecture
+                linter check backend dependencies, module boundaries and migration rules. API checks validate
+                OpenAPI contracts and generated code. Frontend checks cover TypeScript, React, layer imports,
+                styles and localization.
+              </p>
+
+              <p>
+                Ruff and ty check Python formatting, lint rules and types. ShellCheck checks shell scripts.
+                actionlint checks GitHub Actions workflows. Pre-commit hooks check affected backend, frontend
+                and Python files without rewriting them. CI also runs linting.
+              </p>
+
+              <p>
+                <a href="https://github.com/databasus/databasus/blob/main/mise-tasks/backend/lint">
+                  Backend lint checks
+                </a>
+                {" · "}
+                <a href="https://github.com/databasus/databasus/blob/main/frontend/lint/check.sh">
+                  Frontend lint checks
+                </a>
+                {" · "}
+                <a href="https://github.com/databasus/databasus/blob/main/scripts/python_quality.py">
+                  Python checks
+                </a>
+              </p>
+
+              <p>
+                Tests exercise real behavior. Backend tests use the application API and check engines against
+                real database containers. End-to-end scenarios create backups, restore them and inspect the
+                restored data. Other tests cover upgrades, frontend screens and browser workflows with visual
+                comparisons.
+              </p>
+
+              <p>
+                Checks are chosen for each change. Required release suites run on amd64 and arm64. The
+                implementing agent runs the relevant linters and tests before review; review agents inspect the
+                evidence without rerunning those commands.
+              </p>
+
+              <p>
+                <a href="https://github.com/databasus/databasus/blob/main/docs/testing.md">
+                  Test strategy and commands
+                </a>
+              </p>
+
+              <p>
+                Before publication, CodeQL and Semgrep analyze code, Gitleaks scans for secrets and dependency
+                checks look for vulnerabilities. Trivy scans container images and Dockerfiles.
+              </p>
+
+              <p>
+                <strong>Required CI checks must pass before release.</strong>{" "}
+                <a href={`${getLocalizedHref("en", "security")}#security-and-reliability-engineering`}>
+                  Security and reliability engineering
                 </a>
                 .
               </p>

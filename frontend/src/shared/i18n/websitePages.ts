@@ -1,4 +1,4 @@
-import type { Locale } from './dictionaries';
+import type { Locale } from '@/shared/i18n/dictionaries';
 
 const WEBSITE_URL = 'https://databasus.com';
 
@@ -30,14 +30,13 @@ export const WEBSITE_PAGES = {
   restoreVerification: { path: 'restore-verification', isTranslated: true },
   faqLocalhost: { path: 'faq/localhost', isTranslated: true },
   faqSupabase: { path: 'faq/supabase', isTranslated: true },
-  storagesGoogleDrive: { path: 'storages/google-drive', isTranslated: true },
   storagesCloudflareR2: { path: 'storages/cloudflare-r2', isTranslated: true },
   notifiersSlack: { path: 'notifiers/slack', isTranslated: true },
   notifiersTeams: { path: 'notifiers/teams', isTranslated: true },
   notifiersMattermost: { path: 'notifiers/mattermost', isTranslated: false },
 } satisfies Record<string, WebsitePage>;
 
-export type WebsitePageId = keyof typeof WEBSITE_PAGES;
+type WebsitePageId = keyof typeof WEBSITE_PAGES;
 
 // Opens the page in the selected language when the website publishes it in that language, and the
 // English page otherwise. URLs end with a slash, the website's canonical form.

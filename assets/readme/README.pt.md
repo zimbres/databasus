@@ -2,7 +2,7 @@
   <img src="../logo.svg" alt="Databasus Logo" width="250"/>
 
   <h3>Ferramenta de backup PostgreSQL</h3>
-  <p>O Databasus é uma ferramenta gratuita, de código aberto e self-hosted para fazer backup de PostgreSQL. Crie backups em diferentes armazenamentos (S3, Google Drive, FTP, etc.) com notificações sobre o progresso (Slack, Discord, Telegram, etc.). Com foco em Point-in-Time Recovery com RPO/RTO baixos</p>
+  <p>O Databasus é uma ferramenta gratuita, de código aberto e self-hosted para fazer backup de PostgreSQL. Crie backups em diferentes armazenamentos (S3, Azure Blob Storage, FTP, etc.) com notificações sobre o progresso (Slack, Discord, Telegram, etc.). Com foco em Point-in-Time Recovery com RPO/RTO baixos</p>
   
   <!-- Badges -->
    [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -22,15 +22,15 @@
     <a href="README.es.md">Español</a> •
     <b>Português</b> •
     <a href="README.zh.md">中文</a> •
-    <a href="README.fr.md">Français</a>
+    <a href="README.fr.md">Français</a> •
+    <a href="README.id.md">Bahasa Indonesia</a>
   </p>
 
   <p>
     <a href="#-recursos">Recursos</a> •
     <a href="#-instalação">Instalação</a> •
     <a href="#-como-usar">Como usar</a> •
-    <a href="#-licença">Licença</a> •
-    <a href="#-contribuindo">Contribuindo</a>
+    <a href="#-licença">Licença</a>
   </p>
 
   <p style="margin-top: 20px; margin-bottom: 20px; font-size: 1.2em;">
@@ -79,7 +79,7 @@ O Databasus faz uma restauração de verdade para confirmar que os backups serve
 ### 🗄️ **Vários destinos de armazenamento** <a href="https://databasus.com/pt/storages/">(ver suportados)</a>
 
 - **Armazenamento local**: mantenha os backups no seu VPS ou servidor
-- **Armazenamento na nuvem**: S3, Cloudflare R2, Google Drive, NAS, Dropbox, SFTP, Rclone e outros
+- **Armazenamento na nuvem**: S3, Cloudflare R2, Azure Blob Storage, NAS, FTP, SFTP e outros
 - **Seguro**: todos os dados continuam sob o seu controle
 
 ### 📱 **Notificações** <a href="https://databasus.com/pt/notifiers/">(ver suportados)</a>
@@ -254,7 +254,7 @@ Para mais opções (NodePort, TLS, HTTPRoute do Gateway API), veja o [README do 
 2. **Adicione a sua primeira base de dados para backup**: clique em "New Database" e siga o assistente de configuração
 3. **Configure o agendamento**: escolha entre intervalos de hora em hora, diário, semanal, mensal ou cron
 4. **Informe a conexão com a base**: preencha as credenciais e os dados de conexão da sua base de dados
-5. **Escolha o armazenamento**: selecione onde guardar os backups (local, S3, Google Drive, etc.)
+5. **Escolha o armazenamento**: selecione onde guardar os backups (local, S3, Azure Blob Storage, etc.)
 6. **Configure a política de retenção**: escolha período de tempo, quantidade ou GFS para definir por quanto tempo os backups ficam guardados
 7. **Adicione notificações** (opcional): configure notificações por e-mail, Telegram, Slack, Mattermost ou webhook
 8. **Salve e inicie**: o Databasus valida as configurações e começa a seguir o agendamento dos backups
@@ -293,17 +293,15 @@ Depois de instalar, também é recomendável <a href="https://databasus.com/pt/f
 
 ## 🛡️ Engenharia de segurança e confiabilidade
 
-O Databasus lida com dados sensíveis, então evitar vulnerabilidades, acessos não autorizados e vazamentos é a preocupação central. Investimos nisso dos dois lados do sistema: no próprio código (verificação de permissões, criptografia, cuidado no tratamento de segredos) e na infraestrutura em volta dele (análise de dependências, resposta a CVEs, boas práticas de DevSecOps). O pipeline descrito abaixo roda automaticamente a cada commit e a cada PR. Nenhuma camada basta sozinha, mas juntas elas reduzem a chance de que código vulnerável, dependências inseguras, imagens quebradas ou backups impossíveis de restaurar cheguem a uma release.
+Veja o [processo completo de segurança e confiabilidade](https://databasus.com/pt/security/#security-and-reliability-engineering).
 
-Na análise estática combinamos várias passagens independentes. O CodeQL varre todo o código em busca de problemas de segurança. Em cada PR, o gitleaks procura segredos vazados e o semgrep verifica o código com regras de segurança. Dockerfiles e workflows de CI ganham regras próprias (referências de action fixadas, permissões de privilégio mínimo, imagens base suspeitas), então padrões inseguros aparecem antes do merge. Além dessas checagens por PR, o Codex Security da OpenAI faz auditorias periódicas e mais profundas de toda a base de código. É um programa à parte, que pega problemas arquiteturais e transversais que uma varredura restrita ao PR deixa passar.
+Antes de cada versão, o Databasus executa verificações automáticas para reduzir o risco de vulnerabilidades, vazamentos de dados e backups que não possam ser restaurados:
 
-Do lado das dependências, o Dependabot acompanha todas as nossas dependências no GitHub Advisory Database e mostra CVEs poucos minutos depois da publicação. As atualizações passam por um período de espera, para que versões recém-lançadas amadureçam antes de serem adotadas. Essa é uma defesa deliberada contra incidentes com pacotes comprometidos, como os ataques à cadeia de suprimentos. O Dependency Review Action bloqueia de imediato qualquer PR que introduza um CVE novo de severidade HIGH ou CRITICAL.
+- **Análises de segurança** buscam vulnerabilidades conhecidas no código, nas dependências e nas imagens de contêineres, além de segredos expostos.
+- **Testes de restauração** executam ciclos completos de backup e restauração em contêineres reais para cada mecanismo e versão principal compatíveis.
+- **Requisitos de publicação** exigem que testes, builds e verificações de segurança passem. Alertas críticos do CodeQL abertos na análise da versão bloqueiam a publicação.
 
-As imagens de contêiner passam pelo Trivy a cada build. Uma passagem separada do Trivy sobre o Dockerfile pega configurações erradas antes que elas entrem em uma imagem. Todas as GitHub Actions são fixadas em SHAs completos de commit, e não em tags móveis como `@v4` ou `@main`, que foram um vetor de ataque ativo em 2025. Os workflows usam permissões de privilégio mínimo por padrão e só elevam por job quando é realmente necessário.
-
-Os caminhos críticos têm testes unitários e de integração, executados contra contêineres reais de base de dados para cada motor e versão principal suportados. A restauração é o caminho que mais importa em uma ferramenta de backup, então testamos isso explicitamente: cada PR roda ciclos completos de backup e restauração contra esses mesmos contêineres reais, comprovando que os backups podem mesmo ser restaurados de ponta a ponta, e não apenas gravados sem erro. O resto do pipeline de CI/CD roda lint, verificação de tipos, a suíte completa de testes, smoke tests de imagem e builds multiarquitetura em cada PR. Uma release só sai se tudo isso passar.
-
-Encontrou uma vulnerabilidade? Reporte pela aba Security do GitHub. Veja o [SECURITY.md](https://github.com/databasus/databasus?tab=security-ov-file#readme). Relatos de segurança são a fila de trabalho de maior prioridade. Sobre a segurança da aplicação em execução (AES-256-GCM em repouso, armazenamento zero-trust, segredos criptografados, usuário de base de dados somente leitura por padrão), veja [Segurança de nível empresarial](#-segurança-de-nível-empresarial-docs) na seção de recursos acima.
+Auditorias periódicas do Codex Security da OpenAI complementam essas verificações. Relate vulnerabilidades de forma privada seguindo [SECURITY.md](https://github.com/databasus/databasus?tab=security-ov-file#readme); esses relatos têm prioridade.
 
 ---
 
@@ -311,8 +309,6 @@ Encontrou uma vulnerabilidade? Reporte pela aba Security do GitHub. Veja o [SECU
 
 Este projeto está sob a licença Apache 2.0 - veja o arquivo [LICENSE](../../LICENSE) para mais detalhes
 
-## 🤝 Contribuindo
+## 💬 Comunidade
 
-Contribuições são bem-vindas! Leia o <a href="https://databasus.com/contribute">guia de contribuição</a> para conhecer os detalhes, as prioridades e as regras. Se você quer contribuir mas não sabe por onde começar, me escreva no Telegram [@rostislav_dugin](https://t.me/rostislav_dugin)
-
-Você também pode entrar na nossa grande comunidade de desenvolvedores, DBAs e engenheiros de DevOps no Telegram [@databasus_community](https://t.me/databasus_community).
+Entre na nossa grande comunidade de desenvolvedores, DBAs e engenheiros de DevOps no Telegram [@databasus_community](https://t.me/databasus_community).

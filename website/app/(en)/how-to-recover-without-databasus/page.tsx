@@ -26,6 +26,7 @@ export const metadata: Metadata = {
     description:
       "Learn how to manually restore your database backups without Databasus. No vendor lock-in: decrypt and restore your backups using standard tools and your secret key.",
     type: "article",
+    locale: "en_US",
     url: "https://databasus.com/how-to-recover-without-databasus",
   },
   twitter: {
@@ -300,7 +301,7 @@ mongorestore --host hostname:27017 --username username --password password \\
               <ul>
                 <li>
                   <strong>Backup file</strong> from your storage (local storage,
-                  S3, Google Drive, etc.)
+                  S3, Azure Blob Storage, etc.)
                 </li>
                 <li>
                   <strong>Metadata file</strong> from the same storage. It named

@@ -1,126 +1,95 @@
-import { Dropdown } from 'antd';
-import type { MenuProps } from 'antd';
+import { Menu } from '@mantine/core';
+import { Monitor, Moon, Sun } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { THEME_MODE_LABEL_KEYS, useTheme } from '../theme';
-
-const SunIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="4" />
-    <path d="M12 2v2" />
-    <path d="M12 20v2" />
-    <path d="m4.93 4.93 1.41 1.41" />
-    <path d="m17.66 17.66 1.41 1.41" />
-    <path d="M2 12h2" />
-    <path d="M20 12h2" />
-    <path d="m6.34 17.66-1.41 1.41" />
-    <path d="m19.07 4.93-1.41 1.41" />
-  </svg>
-);
-
-const MoonIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-  </svg>
-);
-
-const SystemIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect width="20" height="14" x="2" y="3" rx="2" />
-    <line x1="8" x2="16" y1="21" y2="21" />
-    <line x1="12" x2="12" y1="17" y2="21" />
-  </svg>
-);
+import { THEME_MODE_LABEL_KEYS, useTheme } from '@/shared/theme';
 
 interface Props {
   isSplitEnd?: boolean;
 }
 
 export function ThemeToggleComponent({ isSplitEnd = false }: Props) {
+  const [isOpen, setIsOpen] = useState(false);
+  const controlRef = useRef<HTMLButtonElement>(null);
   const { t } = useTranslation();
+
   const { theme, setTheme, resolvedTheme } = useTheme();
-
-  const items: MenuProps['items'] = [
-    {
-      key: 'light',
-      label: (
-        <div className="flex items-center gap-2">
-          <SunIcon />
-          <span>{t(THEME_MODE_LABEL_KEYS.light)}</span>
-        </div>
-      ),
-      onClick: () => setTheme('light'),
-    },
-    {
-      key: 'dark',
-      label: (
-        <div className="flex items-center gap-2">
-          <MoonIcon />
-          <span>{t(THEME_MODE_LABEL_KEYS.dark)}</span>
-        </div>
-      ),
-      onClick: () => setTheme('dark'),
-    },
-    {
-      key: 'system',
-      label: (
-        <div className="flex items-center gap-2">
-          <SystemIcon />
-          <span>{t(THEME_MODE_LABEL_KEYS.system)}</span>
-        </div>
-      ),
-      onClick: () => setTheme('system'),
-    },
-  ];
-
-  const getCurrentIcon = () => {
-    if (theme === 'system') {
-      return <SystemIcon />;
-    }
-    return resolvedTheme === 'dark' ? <MoonIcon /> : <SunIcon />;
-  };
+  const CurrentIcon = theme === 'system' ? Monitor : resolvedTheme === 'dark' ? Moon : Sun;
 
   return (
-    <Dropdown menu={{ items, selectedKeys: [theme] }} trigger={['click']} placement="bottomRight">
-      <button
-        className={`flex cursor-pointer items-center gap-1.5 border border-gray-200 bg-white px-2.5 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 ${
-          isSplitEnd ? 'rounded-r-md border-l-0' : 'rounded-md'
-        }`}
-        title={t('app.theme.title', { theme: t(THEME_MODE_LABEL_KEYS[theme]) })}
+    <Menu
+      opened={isOpen}
+      onChange={(isNextOpen) => {
+        setIsOpen(isNextOpen);
+        if (!isNextOpen) controlRef.current?.focus();
+      }}
+      returnFocus={false}
+      closeOnEscape={false}
+      position="bottom-end"
+      withInitialFocusPlaceholder={false}
+    >
+      <Menu.Target>
+        <button
+          ref={controlRef}
+          type="button"
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowDown') {
+              event.preventDefault();
+              setIsOpen(true);
+            } else if (event.key === 'Escape' && isOpen) {
+              event.preventDefault();
+              event.stopPropagation();
+              setIsOpen(false);
+              controlRef.current?.focus();
+            }
+          }}
+          className={`flex cursor-pointer items-center gap-1.5 border border-border bg-surface px-2.5 py-1 text-sm text-content transition-colors hover:bg-hover ${
+            isSplitEnd ? 'rounded-r-md border-l-0' : 'rounded-md'
+          }`}
+          aria-label={t('app.theme.title', { theme: t(THEME_MODE_LABEL_KEYS[theme]) })}
+        >
+          <CurrentIcon aria-hidden size={14} />
+          <span className="hidden sm:inline">{t(THEME_MODE_LABEL_KEYS[theme])}</span>
+        </button>
+      </Menu.Target>
+      <Menu.Dropdown
+        onKeyDownCapture={(event) => {
+          if (event.key !== 'Escape') return;
+
+          event.preventDefault();
+          event.stopPropagation();
+          setIsOpen(false);
+          controlRef.current?.focus();
+        }}
       >
-        {getCurrentIcon()}
-        <span className="hidden sm:inline">{t(THEME_MODE_LABEL_KEYS[theme])}</span>
-      </button>
-    </Dropdown>
+        <Menu.RadioGroup
+          value={theme}
+          onChange={(value) => {
+            if (value === 'system' || value === 'light' || value === 'dark') setTheme(value);
+          }}
+        >
+          {(
+            [
+              ['light', Sun],
+              ['dark', Moon],
+              ['system', Monitor],
+            ] as const
+          ).map(([mode, Icon]) => (
+            <Menu.RadioItem
+              key={mode}
+              value={mode}
+              closeMenuOnClick
+              data-autofocus={mode === theme || undefined}
+            >
+              <span className="flex items-center gap-2">
+                <Icon aria-hidden size={14} />
+                {t(THEME_MODE_LABEL_KEYS[mode])}
+              </span>
+            </Menu.RadioItem>
+          ))}
+        </Menu.RadioGroup>
+      </Menu.Dropdown>
+    </Menu>
   );
 }

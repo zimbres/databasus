@@ -1,6 +1,8 @@
-import { Button, Modal } from 'antd';
-import type { JSX, ReactNode } from 'react';
+import { Button } from '@mantine/core';
+import { type JSX, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Dialog } from '@/shared/ui/Dialog';
 
 interface Props {
   onConfirm(): void;
@@ -8,7 +10,7 @@ interface Props {
 
   // Rendered as React content, never as HTML: a sentence with inline markup is a Trans element.
   description: ReactNode;
-  actionButtonColor: 'blue' | 'red';
+  isDestructive: boolean;
 
   actionText: string;
   cancelText?: string;
@@ -19,7 +21,7 @@ export function ConfirmationComponent({
   onConfirm,
   onDecline,
   description,
-  actionButtonColor,
+  isDestructive,
   actionText,
   cancelText,
   hideCancelButton = false,
@@ -27,35 +29,33 @@ export function ConfirmationComponent({
   const { t } = useTranslation();
 
   return (
-    <Modal
+    <Dialog
       title={t('common.confirmation.title')}
-      open
-      onCancel={() => onDecline()}
-      footer={<div />}
+      opened
+      onClose={onDecline}
+      closeButtonProps={{ 'aria-label': t('common.actions.close') }}
     >
       <div>{description}</div>
 
-      <div className="mt-5 flex">
+      <div className="mt-5 flex flex-wrap justify-end gap-2">
         {!hideCancelButton && (
           <Button
-            className="ml-auto"
+            className="h-auto min-h-8 max-w-full whitespace-normal"
             onClick={() => onDecline()}
-            danger={actionButtonColor !== 'red'}
-            type="primary"
           >
             {cancelText || t('common.actions.cancel')}
           </Button>
         )}
 
         <Button
-          className="ml-1"
+          className="h-auto min-h-8 max-w-full whitespace-normal"
           onClick={() => onConfirm()}
-          danger={actionButtonColor === 'red'}
-          type="primary"
+          color={isDestructive ? 'danger' : 'accent'}
+          variant="filled"
         >
           {actionText}
         </Button>
       </div>
-    </Modal>
+    </Dialog>
   );
 }

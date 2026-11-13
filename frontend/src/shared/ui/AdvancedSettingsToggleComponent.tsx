@@ -1,24 +1,33 @@
-import { DownOutlined, UpOutlined } from '@ant-design/icons';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Props {
   label: string;
   isShowAdvanced: boolean;
   onToggle: () => void;
+  regionId?: string;
 }
 
-export const AdvancedSettingsToggleComponent = ({ label, isShowAdvanced, onToggle }: Props) => (
+export const AdvancedSettingsToggleComponent = ({
+  label,
+  isShowAdvanced,
+  onToggle,
+  regionId,
+}: Props) => (
   <div className="mt-4 mb-1 flex items-center">
-    <div
-      className="flex cursor-pointer items-center text-sm text-blue-600 hover:text-blue-800"
+    <button
+      type="button"
+      className="inline-flex max-w-full cursor-pointer items-center gap-2 text-left text-sm text-accent"
+      aria-expanded={isShowAdvanced}
+      aria-controls={regionId}
       onClick={onToggle}
     >
-      <span className="mr-2">{label}</span>
+      <span>{label}</span>
 
       {isShowAdvanced ? (
-        <UpOutlined style={{ fontSize: '12px' }} />
+        <ChevronUp aria-hidden size={12} className="shrink-0" />
       ) : (
-        <DownOutlined style={{ fontSize: '12px' }} />
+        <ChevronDown aria-hidden size={12} className="shrink-0" />
       )}
-    </div>
+    </button>
   </div>
 );

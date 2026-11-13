@@ -8,19 +8,29 @@ Commands run from the repository root, with the tools from `mise.toml` installed
 
 To run the backend together with the frontend, the dev database, the test fixtures and the WAL backup source:
 
-> just run
+> mise run run
 
-The backend runs under [air](.air.toml), which rebuilds and restarts it when a Go file is saved; a build that fails leaves the previous backend serving. Once the backend accepts connections, the [seed command](cmd/seed_dev/doc.go) creates the dev account and the seeded databases if they are missing. To run the seed again against the running app, from `backend/`:
+The backend runs under [air](.air.toml), which rebuilds and restarts it when a Go file is saved; a build that fails leaves the previous backend serving. Once the backend accepts connections, the [seed command](cmd/seed_dev/doc.go) creates the missing dev items and makes the dev account the bootstrap administrator, leaving the previous holder as an ordinary administrator. The seed requires development mode and the same `DATABASE_DSN` as the running backend; authentication and ordinary item creation use the public API, and the privilege assignment uses the local database. To run the seed again against the running app, from `backend/`:
 
 > go run ./cmd/seed_dev
 
 To run tests:
 
-> just test
+> mise run test
 
 Before commit:
 
-> just lint
+> mise run lint
+
+# Verification agent
+
+To build the agent directly from the repository root:
+
+```sh
+CGO_ENABLED=0 go -C backend build -o temp/verification-agent/databasus-verification-agent ./cmd/verification-agent
+```
+
+Run `backend/temp/verification-agent/databasus-verification-agent run --help` for connection and resource flags. [Testing](../docs/testing.md#commands) lists the agent's Docker and Podman suites.
 
 # Migrations
 
@@ -33,13 +43,3 @@ To apply or roll back migrations on the dev database, with the variables from `.
 > goose -dir backend/migrations up
 
 > goose -dir backend/migrations down
-
-# Swagger
-
-`just run` generates the swagger docs before the backend starts. To regenerate them by hand, from `backend/`:
-
-> swag init -d . -g cmd/main.go -o swagger
-
-Swagger URL is:
-
-> http://localhost:4005/api/v1/docs/swagger/index.html#/

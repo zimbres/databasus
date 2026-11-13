@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { WEBSITE_PAGES, getWebsitePageUrl } from '@/shared/i18n/websitePages';
+
 import websiteI18nSource from '../../../../website/app/i18n.ts?raw';
-import { WEBSITE_PAGES, getWebsitePageUrl } from './websitePages';
 
 const readTranslatedPaths = (source: string): string[] => {
   const list = source.match(/TRANSLATED_PATHS\s*=\s*\[([\s\S]*?)\]\s*as const/);
@@ -30,6 +31,10 @@ describe('getWebsitePageUrl', () => {
     expect(getWebsitePageUrl('installation', 'ru')).toBe('https://databasus.com/ru/installation/');
   });
 
+  it('opens a translated page in Indonesian', () => {
+    expect(getWebsitePageUrl('installation', 'id')).toBe('https://databasus.com/id/installation/');
+  });
+
   it('opens the English page for English', () => {
     expect(getWebsitePageUrl('installation', 'en')).toBe('https://databasus.com/installation/');
   });
@@ -38,11 +43,17 @@ describe('getWebsitePageUrl', () => {
     expect(getWebsitePageUrl('notifiersMattermost', 'ru')).toBe(
       'https://databasus.com/notifiers/mattermost/',
     );
+    expect(getWebsitePageUrl('notifiersMattermost', 'id')).toBe(
+      'https://databasus.com/notifiers/mattermost/',
+    );
   });
 
   it('keeps the anchor of a section in every language', () => {
     expect(getWebsitePageUrl('accessManagementGlobalSettings', 'ru')).toBe(
       'https://databasus.com/ru/access-management/#global-settings',
+    );
+    expect(getWebsitePageUrl('accessManagementGlobalSettings', 'id')).toBe(
+      'https://databasus.com/id/access-management/#global-settings',
     );
     expect(getWebsitePageUrl('accessManagementGlobalSettings', 'en')).toBe(
       'https://databasus.com/access-management/#global-settings',

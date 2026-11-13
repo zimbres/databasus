@@ -31,6 +31,7 @@ export const metadata: Metadata = {
     description:
       "Learn how to install Databasus using automated script, Docker run, Docker Compose, Helm for Kubernetes or Caddy reverse proxy. Simple zero-config installation for your self-hosted PostgreSQL backup system.",
     type: "article",
+    locale: "en_US",
     url: "https://databasus.com/installation",
   },
   twitter: {
@@ -486,7 +487,7 @@ sudo curl -sSL https://raw.githubusercontent.com/databasus/databasus/refs/heads/
                 </li>
                 <li>
                   <strong>Choose storage destination</strong>: Select where to
-                  store your backups (local, S3, Google Drive, etc.)
+                  store your backups (local, S3, Azure Blob Storage, etc.)
                 </li>
                 <li>
                   <strong>Set up notifications</strong>: Add notification
@@ -528,9 +529,9 @@ sudo curl -sSL https://raw.githubusercontent.com/databasus/databasus/refs/heads/
               <p>
                 Returns <code>200</code> when healthy, or <code>503</code> with
                 a reason when something needs attention: internal database,
-                cache, disk usage (above 95%), database client tools, backup
-                scheduler and verification-agent liveness. No authentication, and
-                CORS is open for browser-based monitors.
+                disk usage (above 95%), database client tools, background jobs
+                and verification-agent liveness. No authentication, and CORS is
+                open for browser-based monitors.
               </p>
 
               <p>
