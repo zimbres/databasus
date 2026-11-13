@@ -17,7 +17,7 @@ import (
 	"databasus-verification-container-agent/internal/testutil"
 )
 
-func Test_Beat_WhenNoJobsRegistered_ReportsCapacityWithRamConvertedToGbAndNoVerificationIDs(t *testing.T) {
+func Test_Beat_WhenNoJobsRegistered_ReportsCapacityInMbAndNoVerificationIDs(t *testing.T) {
 	var body map[string]any
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +32,7 @@ func Test_Beat_WhenNoJobsRegistered_ReportsCapacityWithRamConvertedToGbAndNoVeri
 	client := api.NewClient(server.URL, "tok", "agent-1", testutil.DiscardLogger())
 	capacity := config.Capacity{
 		MaxCPU:            8,
-		MaxRAMMb:          4096,
+		MaxRAMMb:          512,
 		MaxDiskGb:         100,
 		MaxConcurrentJobs: 4,
 	}
@@ -40,7 +40,8 @@ func Test_Beat_WhenNoJobsRegistered_ReportsCapacityWithRamConvertedToGbAndNoVeri
 	NewHeartbeater(client, capacity, testutil.DiscardLogger()).sendHeartbeat(t.Context(), testutil.DiscardLogger())
 
 	assert.Equal(t, float64(8), body["maxCpu"])
-	assert.Equal(t, float64(4), body["maxRamGb"], "4096 MB must be reported as 4 GB")
+	assert.Equal(t, float64(512), body["maxRamMb"])
+	assert.NotContains(t, body, "maxRamGb")
 	assert.Equal(t, float64(100), body["maxDiskGb"])
 	assert.Equal(t, float64(4), body["maxConcurrentJobs"])
 	assert.Equal(t, []any{}, body["currentVerificationIds"])

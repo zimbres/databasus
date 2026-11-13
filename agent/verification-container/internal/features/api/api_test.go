@@ -269,7 +269,7 @@ func Test_Heartbeat_WhenCalled_SendsFlatEnvelopeWithBearerAndAgentPath(t *testin
 
 	response, err := client.Heartbeat(t.Context(), HeartbeatRequest{
 		MaxCPU:                 8,
-		MaxRAMGb:               4,
+		MaxRAMMb:               4096,
 		MaxDiskGb:              100,
 		MaxConcurrentJobs:      4,
 		CurrentVerificationIDs: []uuid.UUID{},
@@ -285,12 +285,12 @@ func Test_Heartbeat_WhenCalled_SendsFlatEnvelopeWithBearerAndAgentPath(t *testin
 	assert.Equal(t, "Bearer tok123", capturedAuth)
 
 	assert.Equal(t, float64(8), capturedBody["maxCpu"])
-	assert.Equal(t, float64(4), capturedBody["maxRamGb"])
+	assert.Equal(t, float64(4096), capturedBody["maxRamMb"])
 	assert.Equal(t, float64(100), capturedBody["maxDiskGb"])
 	assert.Equal(t, float64(4), capturedBody["maxConcurrentJobs"])
 
-	_, hasRamMb := capturedBody["maxRamMb"]
-	assert.False(t, hasRamMb, "heartbeat envelope must use maxRamGb, never maxRamMb")
+	_, hasRamGb := capturedBody["maxRamGb"]
+	assert.False(t, hasRamGb, "heartbeat envelope must use maxRamMb, never maxRamGb")
 
 	require.Contains(t, capturedBody, "currentVerificationIds")
 	assert.Equal(t, []any{}, capturedBody["currentVerificationIds"],
